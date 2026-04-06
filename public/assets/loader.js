@@ -6,7 +6,7 @@ if(!widgetID){
 else{
     console.log("Loading widget:", widgetID);
 
-    const widgetPath = `/widgets/${widgetID}/index.js`;
+    const widgetPath = `../widgets/${widgetID}/index.js`;
 
     import(widgetPath).then((module) => {
         if(module.init){
