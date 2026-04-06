@@ -1,22 +1,30 @@
-const widgetID = document.querySelector('meta[name="widget-id"')?.content;
+const widgetId = document.querySelector('meta[name="widget-id"]')?.content;
 
-if(!widgetID){
-    console.error("No ID widget found");
+if (!widgetId) {
+  console.error("No widget-id found");
 }
-else{
-    console.log("Loading widget:", widgetID);
+else {
+  console.log("Loading widget:", widgetId);
 
-    const widgetPath = `/widgets/${widgetID}/index.js`;
+  const basePath = `/widgets/${widgetId}`;
+  const cssPath = `${basePath}/style.css`;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = cssPath;
+  document.head.appendChild(link);
 
-    import(widgetPath).then((module) => {
-        if(module.init){
-            module.init();
-        }
-        else{
-            console.error("Widget has no init function");
-        }
+  const jsPath = `${basePath}/index.js`;
+
+  import(jsPath)
+    .then((module) => {
+      if (module.init) {
+        module.init();
+      }
+      else {
+        console.error("Widget has no init function");
+      }
     })
-    .catch((err) =>{
-        console.error("Erros loading widget", err);
-    })
+    .catch((err) => {
+      console.error("Error loading widget:", err);
+    });
 }

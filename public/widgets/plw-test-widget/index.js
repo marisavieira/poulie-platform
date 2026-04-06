@@ -1,6 +1,6 @@
 export function init(){
     const el = document.createElement("div");
-    el.innerText = "Widget loaded";
+    el.innerText = "Test widget loaded";
     el.className = "plw-test-widget";
     document.body.appendChild(el);
 }

@@ -1,3 +1,7 @@
+body {
+  background: purple;
+}
+
 .plw-test-widget {
   color: white;
   font-size: 32px;
