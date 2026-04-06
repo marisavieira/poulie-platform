@@ -1,7 +1,6 @@
 export function init(){
     const el = document.createElement("div");
     el.innerText = "Widget loaded";
-    el.style.color = "white";
-    el.style.fontSize = "32px";
+    el.className = "plw-test-widget";
     document.body.appendChild(el);
 }
