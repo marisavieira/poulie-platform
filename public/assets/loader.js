@@ -1,10 +1,14 @@
+function getLoaderScript() {
+  return document.querySelector('script[data-widget-id]');
+}
+
 function getWidgetId() {
   const meta = document.querySelector('meta[name="widget-id"]');
   if (meta?.getAttribute("content")) {
     return meta.getAttribute("content");
   }
 
-  const script = document.querySelector('script[data-widget-id]');
+  const script = getLoaderScript();
   if (script?.getAttribute("data-widget-id")) {
     return script.getAttribute("data-widget-id");
   }
@@ -12,11 +16,9 @@ function getWidgetId() {
   return null;
 }
 
-function getLoaderScript() {
-  return (
-    document.querySelector('script[data-widget-id]') ||
-    document.currentScript
-  );
+function getMode() {
+  const script = getLoaderScript();
+  return script?.getAttribute("data-mode") || "auto";
 }
 
 function getBaseUrl() {
@@ -24,7 +26,7 @@ function getBaseUrl() {
 
   if (script?.src) {
     const url = new URL(script.src);
-    return `${url.origin}`;
+    return url.origin;
   }
 
   return window.location.origin;
@@ -39,16 +41,15 @@ async function loadWidget() {
   }
 
   try {
+    const mode = getMode();
     const isLocal =
       window.location.hostname === "127.0.0.1" ||
       window.location.hostname === "localhost";
 
-    const hasStreamElementsContext =
-      typeof window !== "undefined" &&
-      typeof window.addEventListener === "function" &&
-      window.location.hostname.includes("streamelements");
+    const enableStreamElements = mode === "streamelements";
+    const enableDebug = mode === "streamelements" ? false : true;
 
-    const baseUrl = isLocal ? window.location.origin + "/public" : getBaseUrl();
+    const baseUrl = isLocal ? `${window.location.origin}/public` : getBaseUrl();
 
     const moduleUrl = `${baseUrl}/widgets/${widgetId}/index.js`;
     const styleUrl = `${baseUrl}/widgets/${widgetId}/style.css`;
@@ -61,15 +62,17 @@ async function loadWidget() {
     const mod = await import(moduleUrl);
 
     mod.init({
-      enableDebug: !hasStreamElementsContext,
-      enableStreamElements: hasStreamElementsContext,
+      enableDebug,
+      enableStreamElements,
     });
 
     console.log("[loader] widget carregado:", widgetId);
+    console.log("[loader] mode:", mode);
+    console.log("[loader] enableDebug:", enableDebug);
+    console.log("[loader] enableStreamElements:", enableStreamElements);
     console.log("[loader] baseUrl:", baseUrl);
-    console.log("[loader] moduleUrl:", moduleUrl);
-    console.log("[loader] styleUrl:", styleUrl);
-  } catch (error) {
+  }
+  catch (error) {
     console.error("[loader] erro ao carregar widget:", error);
   }
 }
