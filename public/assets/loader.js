@@ -78,6 +78,7 @@ async function loadWidget() {
     mod.init({
       enableDebug,
       enableStreamElements,
+      assetBaseUrl: baseUrl,
     });
 
     console.log("[loader] widget carregado:", widgetId);

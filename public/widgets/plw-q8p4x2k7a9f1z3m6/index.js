@@ -1,5 +1,7 @@
 import config from "./config.json" with { type: "json" };
 
+let ASSET_BASE = "";
+
 const state = {
   currentDayKey: getDayKey(),
   currentSprint: 0,
@@ -158,7 +160,7 @@ function renderStamps(total, filled) {
       <div class="focus-card__stamp ${isFilled ? "is-filled" : "is-empty"} ${isNew ? "is-new" : ""}">
         <div class="focus-card__stamp-inner">
           ${isFilled ? ` 
-            <img src="/assets/images/panda.svg"/>       
+            <img src="${ASSET_BASE}/assets/images/panda.svg"/>      
           `: ""}
         </div>
       </div>
@@ -223,7 +225,7 @@ function renderStampOverlay(index) {
         style="--stamp-col:${col}; --stamp-row:${row};"
       >
         <div class="focus-card__stamp-ghost-inner">
-          <img src="/assets/images/panda.svg" alt=""/>
+          <img src="${ASSET_BASE}/assets/images/panda.svg" alt=""/>
         </div>
       </div>
     </div>
@@ -317,6 +319,8 @@ function bindStreamElementsEvents() {
 
 export function init(options = {}) {
   ensureDayReset();
+
+  ASSET_BASE = options.assetBaseUrl || "";
 
   const {
     enableDebug = true,
