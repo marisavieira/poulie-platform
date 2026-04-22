@@ -32,6 +32,18 @@ function getBaseUrl() {
   return window.location.origin;
 }
 
+function ensureAppRoot() {
+  let root = document.getElementById("app");
+
+  if (!root) {
+    root = document.createElement("div");
+    root.id = "app";
+    document.body.appendChild(root);
+  }
+
+  return root;
+}
+
 async function loadWidget() {
   const widgetId = getWidgetId();
 
@@ -53,6 +65,8 @@ async function loadWidget() {
 
     const moduleUrl = `${baseUrl}/widgets/${widgetId}/index.js`;
     const styleUrl = `${baseUrl}/widgets/${widgetId}/style.css`;
+
+    ensureAppRoot();
 
     const link = document.createElement("link");
     link.rel = "stylesheet";
