@@ -1,0 +1,12 @@
+{
+  "id": "plw-q8p4x2k7a9f1z3m6",
+  "name": "focus-card",
+  "titleSuffix": "foco card",
+  "checkInCommand": "!i",
+  "openSprintCommand": "!card",
+  "totalStamps": 6,
+  "displayDurationMs": 50000,
+  "dayReset": true,
+  "stampEmptyImage": "",
+  "stampFilledImage": ""
+}
