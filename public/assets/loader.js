@@ -1,9 +1,22 @@
-async function loadWidget() {
+function getWidgetId() {
   const meta = document.querySelector('meta[name="widget-id"]');
-  const widgetId = meta?.getAttribute("content");
+  if (meta?.getAttribute("content")) {
+    return meta.getAttribute("content");
+  }
+
+  const script = document.querySelector('script[data-widget-id]');
+  if (script?.getAttribute("data-widget-id")) {
+    return script.getAttribute("data-widget-id");
+  }
+
+  return null;
+}
+
+async function loadWidget() {
+  const widgetId = getWidgetId();
 
   if (!widgetId) {
-    console.error("[loader] widget-id não encontrado no meta");
+    console.error("[loader] widget-id não encontrado");
     return;
   }
 
@@ -35,10 +48,8 @@ async function loadWidget() {
     });
 
     console.log("[loader] widget carregado:", widgetId);
-    console.log("[loader] modo local:", isLocal);
-    console.log("[loader] modo StreamElements:", hasStreamElementsContext);
-    console.log("[loader] moduleUrl:", moduleUrl);
-  } catch (error) {
+  }
+  catch (error) {
     console.error("[loader] erro ao carregar widget:", error);
   }
 }
