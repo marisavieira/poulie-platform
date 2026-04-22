@@ -12,6 +12,24 @@ function getWidgetId() {
   return null;
 }
 
+function getLoaderScript() {
+  return (
+    document.querySelector('script[data-widget-id]') ||
+    document.currentScript
+  );
+}
+
+function getBaseUrl() {
+  const script = getLoaderScript();
+
+  if (script?.src) {
+    const url = new URL(script.src);
+    return `${url.origin}`;
+  }
+
+  return window.location.origin;
+}
+
 async function loadWidget() {
   const widgetId = getWidgetId();
 
@@ -30,10 +48,10 @@ async function loadWidget() {
       typeof window.addEventListener === "function" &&
       window.location.hostname.includes("streamelements");
 
-    const basePath = isLocal ? "/public" : "";
+    const baseUrl = isLocal ? window.location.origin + "/public" : getBaseUrl();
 
-    const moduleUrl = `${basePath}/widgets/${widgetId}/index.js`;
-    const styleUrl = `${basePath}/widgets/${widgetId}/style.css`;
+    const moduleUrl = `${baseUrl}/widgets/${widgetId}/index.js`;
+    const styleUrl = `${baseUrl}/widgets/${widgetId}/style.css`;
 
     const link = document.createElement("link");
     link.rel = "stylesheet";
@@ -48,8 +66,10 @@ async function loadWidget() {
     });
 
     console.log("[loader] widget carregado:", widgetId);
-  }
-  catch (error) {
+    console.log("[loader] baseUrl:", baseUrl);
+    console.log("[loader] moduleUrl:", moduleUrl);
+    console.log("[loader] styleUrl:", styleUrl);
+  } catch (error) {
     console.error("[loader] erro ao carregar widget:", error);
   }
 }
