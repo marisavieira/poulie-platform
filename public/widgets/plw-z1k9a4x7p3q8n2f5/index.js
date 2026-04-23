@@ -156,8 +156,7 @@ function resolveSubMonths(source = {}) {
 }
 
 function buildRuntimeConfig(fieldData = {}) {
-  const merged = { ...config, ...DEFAULTS, ...fieldData };
-  return merged;
+  return { ...config, ...DEFAULTS, ...fieldData };
 }
 
 function applyFields(fields = {}) {
@@ -170,7 +169,10 @@ function applyFields(fields = {}) {
   SETTINGS.fontName = String(merged.fontName || DEFAULTS.fontName);
   SETTINGS.fontBase = Number.isFinite(parseNum(merged.fontSize)) ? Math.max(8, Math.min(200, parseNum(merged.fontSize))) : DEFAULTS.fontBase;
   SETTINGS.iconSize = Number.isFinite(parseNum(merged.iconSize)) ? Math.max(8, Math.min(240, parseNum(merged.iconSize))) : DEFAULTS.iconSize;
-  SETTINGS.textTransform = ["none", "uppercase", "lowercase", "capitalize"].includes(String(merged.textTransform || "none").toLowerCase())
+
+  SETTINGS.textTransform = ["none", "uppercase", "lowercase", "capitalize"].includes(
+    String(merged.textTransform || "none").toLowerCase()
+  )
     ? String(merged.textTransform || "none").toLowerCase()
     : "none";
 
@@ -184,10 +186,10 @@ function applyFields(fields = {}) {
   SETTINGS.locale = String(merged.locale || "pt-BR");
   SETTINGS.showCents = isOn(merged.showCents);
 
-  SETTINGS.showFollower = isOn(merged.showFollower);
-  SETTINGS.showSubscriber = isOn(merged.showSubscriber);
-  SETTINGS.showTip = isOn(merged.showTip);
-  SETTINGS.showCheer = isOn(merged.showCheer);
+  SETTINGS.showFollower = merged.showFollower === undefined ? true : isOn(merged.showFollower);
+  SETTINGS.showSubscriber = merged.showSubscriber === undefined ? true : isOn(merged.showSubscriber);
+  SETTINGS.showTip = merged.showTip === undefined ? true : isOn(merged.showTip);
+  SETTINGS.showCheer = merged.showCheer === undefined ? true : isOn(merged.showCheer);
 
   SETTINGS.iconFollower = String(merged.iconFollower || DEFAULTS.iconFollower);
   SETTINGS.iconSubscriber = String(merged.iconSubscriber || DEFAULTS.iconSubscriber);
@@ -195,13 +197,21 @@ function applyFields(fields = {}) {
   SETTINGS.iconCheer = String(merged.iconCheer || DEFAULTS.iconCheer);
 
   SETTINGS.rotateSeconds = Number.isFinite(parseNum(merged.rotateSeconds)) ? Math.max(1, Math.min(999, parseNum(merged.rotateSeconds))) : DEFAULTS.rotateSeconds;
-  SETTINGS.widgetWidthPx = Number.isFinite(parseNum(merged.widgetWidth)) && parseNum(merged.widgetWidth) > 0 ? Math.min(4000, Math.max(1, parseNum(merged.widgetWidth))) : 0;
-  SETTINGS.widgetHeightPx = Number.isFinite(parseNum(merged.widgetHeight)) && parseNum(merged.widgetHeight) > 0 ? Math.min(4000, Math.max(1, parseNum(merged.widgetHeight))) : 0;
 
-  SETTINGS.rtEnabled = isOn(merged.rtEnabled);
+  SETTINGS.widgetWidthPx =
+    Number.isFinite(parseNum(merged.widgetWidth)) && parseNum(merged.widgetWidth) > 0
+      ? Math.min(4000, Math.max(1, parseNum(merged.widgetWidth)))
+      : 0;
+
+  SETTINGS.widgetHeightPx =
+    Number.isFinite(parseNum(merged.widgetHeight)) && parseNum(merged.widgetHeight) > 0
+      ? Math.min(4000, Math.max(1, parseNum(merged.widgetHeight)))
+      : 0;
+
+  SETTINGS.rtEnabled = merged.rtEnabled === undefined ? true : isOn(merged.rtEnabled);
   SETTINGS.rtSeconds = Number.isFinite(parseNum(merged.rtSeconds)) ? Math.max(1, Math.min(20, parseNum(merged.rtSeconds))) : DEFAULTS.rtSeconds;
   SETTINGS.rtSpeed = Number.isFinite(parseNum(merged.rtSpeed)) ? Math.max(1, Math.min(30, parseNum(merged.rtSpeed))) : DEFAULTS.rtSpeed;
-  SETTINGS.rtHueCycle = isOn(merged.rtHueCycle);
+  SETTINGS.rtHueCycle = merged.rtHueCycle === undefined ? true : isOn(merged.rtHueCycle);
   SETTINGS.rtHueDeg = Number.isFinite(parseNum(merged.rtHueDeg)) ? Math.max(0, Math.min(360, parseNum(merged.rtHueDeg))) : DEFAULTS.rtHueDeg;
   SETTINGS.rtPreset = String(merged.rtPreset || "poulie").toLowerCase() in PRESETS ? String(merged.rtPreset || "poulie").toLowerCase() : "poulie";
   SETTINGS.rtAngle = Number.isFinite(parseNum(merged.rtAngle)) ? Math.max(0, Math.min(360, parseNum(merged.rtAngle))) : DEFAULTS.rtAngle;
@@ -333,9 +343,7 @@ function formatEntry(kind) {
 
 function currentCycleList() {
   const categories = enabledCategories();
-  const list = categories
-    .map(kind => ({ kind, entry: formatEntry(kind) }))
-    .filter(item => item.entry);
+  const list = categories.map(kind => ({ kind, entry: formatEntry(kind) })).filter(item => item.entry);
 
   if (list.length === 0 && categories.length) {
     return [{ kind: categories[0], entry: { icon: iconFor(categories[0]), text: "Aguardando eventos…" } }];
@@ -351,7 +359,7 @@ function renderNormal() {
 
   if (list.length === 0) {
     iconEl.textContent = "✦";
-    labelEl.textContent = "Set at least one category";
+    labelEl.textContent = "Aguardando eventos…";
     return;
   }
 
