@@ -63,12 +63,15 @@ function buildRuntimeConfig(fieldData = {}) {
   return {
     ...config,
     ...fieldData,
-    totalStamps: Number(fieldData.totalStamps ?? runtimeConfig.totalStamps),
-    displayDurationMs: Number(fieldData.displayDurationMs ?? runtimeConfig.displayDurationMs),
+    titleSuffix: fieldData.titleSuffix || config.titleSuffix,
+    checkInCommand: fieldData.checkInCommand || config.checkInCommand,
+    openSprintCommand: fieldData.openSprintCommand || config.openSprintCommand,
+    totalStamps: Number(fieldData.totalStamps ?? config.totalStamps),
+    displayDurationMs: Number(fieldData.displayDurationMs ?? config.displayDurationMs),
     dayReset:
       typeof fieldData.dayReset === "boolean"
         ? fieldData.dayReset
-        : String(fieldData.dayReset ?? runtimeConfig.dayReset) === "true",
+        : String(fieldData.dayReset ?? config.dayReset) === "true",
   };
 }
 
@@ -96,7 +99,7 @@ function checkInUser(username) {
   const user = getOrCreateUser(username);
 
   if (user.checkedInSprint) {
-    console.log(`[focus-card] ${username} já usou !i nesta sprint`);
+    console.log(`[focus-card] ${username} já usou ${runtimeConfig.checkInCommand} nesta sprint`);
     return;
   }
 

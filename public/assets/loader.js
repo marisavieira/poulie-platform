@@ -44,6 +44,24 @@ function ensureAppRoot() {
   return root;
 }
 
+function waitForStreamElementsFieldData() {
+  return new Promise((resolve) => {
+    let resolved = false;
+
+    function done(data = {}) {
+      if (resolved) return;
+      resolved = true;
+      resolve(data || {});
+    }
+
+    window.addEventListener("onWidgetLoad", (obj) => {
+      done(obj?.detail?.fieldData || {});
+    });
+
+    setTimeout(() => done({}), 1500);
+  });
+}
+
 async function loadWidget() {
   const widgetId = getWidgetId();
 
@@ -75,10 +93,15 @@ async function loadWidget() {
 
     const mod = await import(moduleUrl);
 
+    const fieldData = enableStreamElements
+      ? await waitForStreamElementsFieldData()
+      : {};
+
     mod.init({
       enableDebug,
       enableStreamElements,
       assetBaseUrl: baseUrl,
+      fieldData,
     });
 
     console.log("[loader] widget carregado:", widgetId);
