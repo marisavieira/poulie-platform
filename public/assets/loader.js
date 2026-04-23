@@ -44,21 +44,29 @@ function ensureAppRoot() {
   return root;
 }
 
-function waitForStreamElementsFieldData() {
+function waitForStreamElementsWidgetData() {
   return new Promise((resolve) => {
     let resolved = false;
 
-    function done(data = {}) {
+    function done(payload = {}) {
       if (resolved) return;
       resolved = true;
-      resolve(data || {});
+      resolve(payload || {});
     }
 
     window.addEventListener("onWidgetLoad", (obj) => {
-      done(obj?.detail?.fieldData || {});
+      done({
+        fieldData: obj?.detail?.fieldData || {},
+        sessionData: obj?.detail?.session?.data || {},
+      });
     });
 
-    setTimeout(() => done({}), 1500);
+    setTimeout(() => {
+      done({
+        fieldData: {},
+        sessionData: {},
+      });
+    }, 1500);
   });
 }
 
@@ -93,15 +101,16 @@ async function loadWidget() {
 
     const mod = await import(moduleUrl);
 
-    const fieldData = enableStreamElements
-      ? await waitForStreamElementsFieldData()
-      : {};
+    const widgetData = enableStreamElements
+      ? await waitForStreamElementsWidgetData()
+      : { fieldData: {}, sessionData: {} };
 
     mod.init({
       enableDebug,
       enableStreamElements,
       assetBaseUrl: baseUrl,
-      fieldData,
+      fieldData: widgetData.fieldData || {},
+      sessionData: widgetData.sessionData || {},
     });
 
     console.log("[loader] widget carregado:", widgetId);

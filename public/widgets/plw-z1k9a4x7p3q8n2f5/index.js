@@ -593,18 +593,23 @@ export function init(options = {}) {
 
   const {
     enableStreamElements = false,
-    fieldData = {}
+    fieldData = {},
+    sessionData = {},
   } = options;
 
   STATE.fieldData = fieldData;
   applyFields(fieldData);
   bindResizeObserver();
 
+  if (sessionData && typeof sessionData === "object") {
+    syncSessionData(sessionData);
+  }
+
+  renderNormal();
+  startRotation();
+
   if (enableStreamElements) {
     bindStreamElementsEvents();
-  } else {
-    renderNormal();
-    startRotation();
   }
 
   document.fonts?.ready?.then(() => applyResponsiveScale());
