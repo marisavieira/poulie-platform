@@ -1,6 +1,45 @@
 import config from "./config.json" with { type: "json" };
 
-let runtimeConfig = { ...config };
+const DEFAULTS = {
+  bgColor: "#363A6A",
+  textColor: "#BFADFF",
+  textTransform: "none",
+  bgAlpha: 80,
+  borderRadiusPx: 25,
+  fontName: "Lexend Deca",
+  fontBase: 24,
+  iconSize: 26,
+  rotateSeconds: 6,
+  showSubMonths: true,
+  subMonthsSource: "streak",
+  subMonthsPrefix: "X",
+  showFollower: true,
+  showSubscriber: true,
+  showTip: true,
+  showCheer: true,
+  currencySymbol: "$",
+  currencyPosition: "before",
+  currencySpace: true,
+  locale: "pt-BR",
+  showCents: false,
+  iconFollower: "♥",
+  iconSubscriber: "★",
+  iconTip: "✦",
+  iconCheer: "◆",
+  widgetWidthPx: 0,
+  widgetHeightPx: 0,
+  rtEnabled: true,
+  rtSeconds: 3,
+  rtSpeed: 3,
+  rtHueCycle: true,
+  rtHueDeg: 0,
+  rtPreset: "poulie",
+  rtAngle: 135,
+  rtC1: "#363A6A",
+  rtC2: "#BFADFF",
+  rtC3: "#5C61A6",
+  rtC4: "#FFADEB"
+};
 
 const PRESETS = {
   poulie: ["#363A6A", "#BFADFF", "#5C61A6", "#FFADEB"],
@@ -8,33 +47,30 @@ const PRESETS = {
   ocean: ["#2B8CFF", "#00E5FF", "#00C9A7", "#2B8CFF"],
   sunset: ["#FF7A59", "#FFD36E", "#FF4D8D", "#A855F7"],
   aurora: ["#00DBDE", "#FC00FF", "#00C9A7", "#2B8CFF"],
-  custom: null,
+  custom: null
 };
 
-const state = {
+const STATE = {
+  fieldData: {},
   timer: null,
   index: 0,
+  latest: { follower: null, subscriber: null, tip: null, cheer: null },
   rtActive: false,
   rtTimer: null,
-  rtHueTimer: null,
-  latest: {
-    follower: null,
-    subscriber: null,
-    tip: null,
-    cheer: null,
-  },
+  rtHueTimer: null
 };
 
-let rootEl = null;
-let iconEl = null;
-let labelEl = null;
+let rootEl;
+let iconEl;
+let labelEl;
+const SETTINGS = { ...DEFAULTS };
 let resizeObserver = null;
 
 function initDom() {
-  const root = document.getElementById("app");
-  if (!root) return;
+  const app = document.getElementById("app");
+  if (!app) return;
 
-  root.innerHTML = `
+  app.innerHTML = `
     <div id="rotator" role="status" aria-live="polite">
       <span class="icon" aria-hidden="true">★</span>
       <span class="label">Loading...</span>
@@ -48,57 +84,42 @@ function initDom() {
 
 function parseNum(raw) {
   if (raw === "" || raw == null) return NaN;
-
   const normalized =
     typeof raw === "string"
       ? raw.trim().replace(",", ".").replace(/\s/g, "")
       : raw;
-
   const value = Number(normalized);
   return Number.isFinite(value) ? value : NaN;
 }
 
 function isOn(value) {
-  return (
-    value === true ||
-    value === "true" ||
-    value === "on" ||
-    value === 1 ||
-    value === "1" ||
-    value === "Yes" ||
-    value === "yes"
-  );
+  return value === true || value === "true" || value === "on" || value === 1 || value === "1" || value === "Yes" || value === "yes";
 }
 
 function hexToRgbaString(hex, alphaPct = 100) {
   const alpha = Math.max(0, Math.min(100, Number(alphaPct || 0))) / 100;
   let safeHex = String(hex || "").trim();
-
   if (!safeHex) return "";
   if (safeHex.startsWith("#")) safeHex = safeHex.slice(1);
-
-  if (safeHex.length === 3) {
-    safeHex = safeHex
-      .split("")
-      .map((char) => char + char)
-      .join("");
-  }
-
+  if (safeHex.length === 3) safeHex = safeHex.split("").map(char => char + char).join("");
   if (safeHex.length !== 6) return "";
 
   const r = parseInt(safeHex.slice(0, 2), 16);
   const g = parseInt(safeHex.slice(2, 4), 16);
   const b = parseInt(safeHex.slice(4, 6), 16);
 
-  if ([r, g, b].some((v) => Number.isNaN(v))) return "";
-
+  if ([r, g, b].some(v => Number.isNaN(v))) return "";
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function makeFontStack(name) {
+  const family = String(name || "Lexend Deca").trim().replace(/["']/g, "\\$&");
+  return `'${family}', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif`;
 }
 
 function addFontLink(href) {
   if (!href) return;
   if (document.querySelector(`link[data-rotator-font="${href}"]`)) return;
-
   const link = document.createElement("link");
   link.rel = "stylesheet";
   link.href = href;
@@ -109,18 +130,9 @@ function addFontLink(href) {
 function loadGoogleFontFamily(name) {
   const family = String(name || "").trim();
   if (!family) return;
-
   const query = encodeURIComponent(family).replace(/%20/g, "+");
   addFontLink(`https://fonts.googleapis.com/css2?family=${query}:wght@100..900&display=swap`);
   addFontLink(`https://fonts.googleapis.com/css2?family=${query}&display=swap`);
-}
-
-function makeFontStack(name) {
-  const family = String(name || "Lexend Deca")
-    .trim()
-    .replace(/["']/g, "\\$&");
-
-  return `'${family}', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif`;
 }
 
 function resolveSubMonths(source = {}) {
@@ -132,7 +144,7 @@ function resolveSubMonths(source = {}) {
     source.totalMonths,
     source.multiMonthDuration,
     source.giftDuration,
-    source.amount,
+    source.amount
   ];
 
   for (const value of candidates) {
@@ -144,283 +156,175 @@ function resolveSubMonths(source = {}) {
 }
 
 function buildRuntimeConfig(fieldData = {}) {
-  return {
-    ...config,
-    ...fieldData,
-    rotateSeconds: Number(fieldData.rotateSeconds ?? config.rotateSeconds),
-    realtimeDurationMs: Number(
-      fieldData.rtSeconds != null
-        ? Number(fieldData.rtSeconds) * 1000
-        : config.realtimeDurationMs
-    ),
-    showFollower:
-      fieldData.showFollower === undefined
-        ? config.showFollower
-        : isOn(fieldData.showFollower),
-    showSubscriber:
-      fieldData.showSubscriber === undefined
-        ? config.showSubscriber
-        : isOn(fieldData.showSubscriber),
-    showTip:
-      fieldData.showTip === undefined
-        ? config.showTip
-        : isOn(fieldData.showTip),
-    showCheer:
-      fieldData.showCheer === undefined
-        ? config.showCheer
-        : isOn(fieldData.showCheer),
-    showSubMonths:
-      fieldData.showSubMonths === undefined
-        ? config.showSubMonths
-        : isOn(fieldData.showSubMonths),
-    subMonthsSource:
-      String(fieldData.subMonthsSource || config.subMonthsSource).toLowerCase() === "months"
-        ? "months"
-        : "streak",
-    subMonthsPrefix: String(fieldData.subMonthsPrefix ?? config.subMonthsPrefix),
-    currencySymbol: String(fieldData.currencySymbol ?? config.currencySymbol),
-    currencyPosition:
-      String(fieldData.currencyPosition || config.currencyPosition).toLowerCase() === "after"
-        ? "after"
-        : "before",
-    currencySpace:
-      fieldData.currencySpace === undefined
-        ? config.currencySpace
-        : isOn(fieldData.currencySpace),
-    locale: String(fieldData.locale || config.locale),
-    showCents:
-      fieldData.showCents === undefined
-        ? config.showCents
-        : isOn(fieldData.showCents),
-    bgColor: String(fieldData.bgColor || config.bgColor),
-    textColor: String(fieldData.textColor || config.textColor),
-    bgAlpha: Number.isFinite(parseNum(fieldData.bgAlpha))
-      ? Math.max(0, Math.min(100, parseNum(fieldData.bgAlpha)))
-      : config.bgAlpha,
-    borderRadius: Number.isFinite(parseNum(fieldData.borderRadius))
-      ? Math.max(0, Math.min(200, parseNum(fieldData.borderRadius)))
-      : config.borderRadius,
-    fontName: String(fieldData.fontName || config.fontName),
-    fontSize: Number.isFinite(parseNum(fieldData.fontSize))
-      ? Math.max(8, Math.min(200, parseNum(fieldData.fontSize)))
-      : config.fontSize,
-    iconSize: Number.isFinite(parseNum(fieldData.iconSize))
-      ? Math.max(8, Math.min(240, parseNum(fieldData.iconSize)))
-      : config.iconSize,
-    textTransform: ["none", "uppercase", "lowercase", "capitalize"].includes(
-      String(fieldData.textTransform || config.textTransform).toLowerCase()
-    )
-      ? String(fieldData.textTransform || config.textTransform).toLowerCase()
-      : "none",
-    widgetWidth: Number.isFinite(parseNum(fieldData.widgetWidth))
-      ? Math.max(0, Math.min(4000, parseNum(fieldData.widgetWidth)))
-      : config.widgetWidth,
-    widgetHeight: Number.isFinite(parseNum(fieldData.widgetHeight))
-      ? Math.max(0, Math.min(4000, parseNum(fieldData.widgetHeight)))
-      : config.widgetHeight,
-    iconFollower: String(fieldData.iconFollower || config.iconFollower),
-    iconSubscriber: String(fieldData.iconSubscriber || config.iconSubscriber),
-    iconTip: String(fieldData.iconTip || config.iconTip),
-    iconCheer: String(fieldData.iconCheer || config.iconCheer),
-    rtEnabled:
-      fieldData.rtEnabled === undefined
-        ? config.rtEnabled
-        : isOn(fieldData.rtEnabled),
-    rtSpeed: Number.isFinite(parseNum(fieldData.rtSpeed))
-      ? Math.max(1, Math.min(30, parseNum(fieldData.rtSpeed)))
-      : config.rtSpeed,
-    rtHueCycle:
-      fieldData.rtHueCycle === undefined
-        ? config.rtHueCycle
-        : isOn(fieldData.rtHueCycle),
-    rtHueDeg: Number.isFinite(parseNum(fieldData.rtHueDeg))
-      ? Math.max(0, Math.min(360, parseNum(fieldData.rtHueDeg)))
-      : config.rtHueDeg,
-    rtPreset:
-      String(fieldData.rtPreset || config.rtPreset).toLowerCase() in PRESETS
-        ? String(fieldData.rtPreset || config.rtPreset).toLowerCase()
-        : "poulie",
-    rtAngle: Number.isFinite(parseNum(fieldData.rtAngle))
-      ? Math.max(0, Math.min(360, parseNum(fieldData.rtAngle)))
-      : config.rtAngle,
-    rtC1: String(fieldData.rtC1 || config.rtC1),
-    rtC2: String(fieldData.rtC2 || config.rtC2),
-    rtC3: String(fieldData.rtC3 || config.rtC3),
-    rtC4: String(fieldData.rtC4 || config.rtC4),
-  };
+  const merged = { ...config, ...DEFAULTS, ...fieldData };
+  return merged;
 }
 
-function applyRuntimeStyles() {
-  document.documentElement.style.setProperty("--bgColor", runtimeConfig.bgColor);
-  document.documentElement.style.setProperty("--textColor", runtimeConfig.textColor);
-  document.documentElement.style.setProperty("--fontStack", makeFontStack(runtimeConfig.fontName));
-  document.documentElement.style.setProperty("--fontBase", String(runtimeConfig.fontSize));
-  document.documentElement.style.setProperty("--iconSize", String(runtimeConfig.iconSize));
-  document.documentElement.style.setProperty("--textTransform", runtimeConfig.textTransform);
-  document.documentElement.style.setProperty("--radiusPx", String(runtimeConfig.borderRadius));
-  document.documentElement.style.setProperty(
-    "--widgetWidth",
-    runtimeConfig.widgetWidth > 0 ? `${runtimeConfig.widgetWidth}px` : "auto"
-  );
-  document.documentElement.style.setProperty(
-    "--widgetHeight",
-    runtimeConfig.widgetHeight > 0 ? `${runtimeConfig.widgetHeight}px` : "auto"
-  );
-  document.documentElement.style.setProperty(
-    "--minGuardW",
-    runtimeConfig.widgetWidth > 0 ? "0" : "1"
-  );
-  document.documentElement.style.setProperty(
-    "--minGuardH",
-    runtimeConfig.widgetHeight > 0 ? "0" : "1"
-  );
+function applyFields(fields = {}) {
+  const merged = buildRuntimeConfig(fields);
 
-  const rgba = hexToRgbaString(runtimeConfig.bgColor, runtimeConfig.bgAlpha);
+  SETTINGS.bgColor = String(merged.bgColor || DEFAULTS.bgColor);
+  SETTINGS.textColor = String(merged.textColor || DEFAULTS.textColor);
+  SETTINGS.bgAlpha = Number.isFinite(parseNum(merged.bgAlpha)) ? Math.max(0, Math.min(100, parseNum(merged.bgAlpha))) : DEFAULTS.bgAlpha;
+  SETTINGS.borderRadiusPx = Number.isFinite(parseNum(merged.borderRadius)) ? Math.max(0, Math.min(200, parseNum(merged.borderRadius))) : DEFAULTS.borderRadiusPx;
+  SETTINGS.fontName = String(merged.fontName || DEFAULTS.fontName);
+  SETTINGS.fontBase = Number.isFinite(parseNum(merged.fontSize)) ? Math.max(8, Math.min(200, parseNum(merged.fontSize))) : DEFAULTS.fontBase;
+  SETTINGS.iconSize = Number.isFinite(parseNum(merged.iconSize)) ? Math.max(8, Math.min(240, parseNum(merged.iconSize))) : DEFAULTS.iconSize;
+  SETTINGS.textTransform = ["none", "uppercase", "lowercase", "capitalize"].includes(String(merged.textTransform || "none").toLowerCase())
+    ? String(merged.textTransform || "none").toLowerCase()
+    : "none";
 
-  if (rgba) {
-    document.documentElement.style.setProperty("--bgColorRGBA", rgba);
-  } else {
-    document.documentElement.style.removeProperty("--bgColorRGBA");
-  }
+  SETTINGS.showSubMonths = isOn(merged.showSubMonths);
+  SETTINGS.subMonthsSource = String(merged.subMonthsSource || "streak").toLowerCase() === "months" ? "months" : "streak";
+  SETTINGS.subMonthsPrefix = String(merged.subMonthsPrefix ?? "X");
 
-  loadGoogleFontFamily(runtimeConfig.fontName);
+  SETTINGS.currencySymbol = String(merged.currencySymbol ?? "$");
+  SETTINGS.currencyPosition = String(merged.currencyPosition || "before").toLowerCase() === "after" ? "after" : "before";
+  SETTINGS.currencySpace = isOn(merged.currencySpace);
+  SETTINGS.locale = String(merged.locale || "pt-BR");
+  SETTINGS.showCents = isOn(merged.showCents);
 
-  if (!state.rtActive) {
-    setBgSolid();
-  }
+  SETTINGS.showFollower = isOn(merged.showFollower);
+  SETTINGS.showSubscriber = isOn(merged.showSubscriber);
+  SETTINGS.showTip = isOn(merged.showTip);
+  SETTINGS.showCheer = isOn(merged.showCheer);
+
+  SETTINGS.iconFollower = String(merged.iconFollower || DEFAULTS.iconFollower);
+  SETTINGS.iconSubscriber = String(merged.iconSubscriber || DEFAULTS.iconSubscriber);
+  SETTINGS.iconTip = String(merged.iconTip || DEFAULTS.iconTip);
+  SETTINGS.iconCheer = String(merged.iconCheer || DEFAULTS.iconCheer);
+
+  SETTINGS.rotateSeconds = Number.isFinite(parseNum(merged.rotateSeconds)) ? Math.max(1, Math.min(999, parseNum(merged.rotateSeconds))) : DEFAULTS.rotateSeconds;
+  SETTINGS.widgetWidthPx = Number.isFinite(parseNum(merged.widgetWidth)) && parseNum(merged.widgetWidth) > 0 ? Math.min(4000, Math.max(1, parseNum(merged.widgetWidth))) : 0;
+  SETTINGS.widgetHeightPx = Number.isFinite(parseNum(merged.widgetHeight)) && parseNum(merged.widgetHeight) > 0 ? Math.min(4000, Math.max(1, parseNum(merged.widgetHeight))) : 0;
+
+  SETTINGS.rtEnabled = isOn(merged.rtEnabled);
+  SETTINGS.rtSeconds = Number.isFinite(parseNum(merged.rtSeconds)) ? Math.max(1, Math.min(20, parseNum(merged.rtSeconds))) : DEFAULTS.rtSeconds;
+  SETTINGS.rtSpeed = Number.isFinite(parseNum(merged.rtSpeed)) ? Math.max(1, Math.min(30, parseNum(merged.rtSpeed))) : DEFAULTS.rtSpeed;
+  SETTINGS.rtHueCycle = isOn(merged.rtHueCycle);
+  SETTINGS.rtHueDeg = Number.isFinite(parseNum(merged.rtHueDeg)) ? Math.max(0, Math.min(360, parseNum(merged.rtHueDeg))) : DEFAULTS.rtHueDeg;
+  SETTINGS.rtPreset = String(merged.rtPreset || "poulie").toLowerCase() in PRESETS ? String(merged.rtPreset || "poulie").toLowerCase() : "poulie";
+  SETTINGS.rtAngle = Number.isFinite(parseNum(merged.rtAngle)) ? Math.max(0, Math.min(360, parseNum(merged.rtAngle))) : DEFAULTS.rtAngle;
+  SETTINGS.rtC1 = String(merged.rtC1 || DEFAULTS.rtC1);
+  SETTINGS.rtC2 = String(merged.rtC2 || DEFAULTS.rtC2);
+  SETTINGS.rtC3 = String(merged.rtC3 || DEFAULTS.rtC3);
+  SETTINGS.rtC4 = String(merged.rtC4 || DEFAULTS.rtC4);
+
+  document.documentElement.style.setProperty("--bgColor", SETTINGS.bgColor);
+  document.documentElement.style.setProperty("--textColor", SETTINGS.textColor);
+  document.documentElement.style.setProperty("--fontStack", makeFontStack(SETTINGS.fontName));
+  document.documentElement.style.setProperty("--fontBase", String(SETTINGS.fontBase));
+  document.documentElement.style.setProperty("--textTransform", SETTINGS.textTransform);
+  document.documentElement.style.setProperty("--iconSize", String(SETTINGS.iconSize));
+  document.documentElement.style.setProperty("--radiusPx", String(SETTINGS.borderRadiusPx));
+  document.documentElement.style.setProperty("--widgetWidth", SETTINGS.widgetWidthPx > 0 ? `${SETTINGS.widgetWidthPx}px` : "auto");
+  document.documentElement.style.setProperty("--widgetHeight", SETTINGS.widgetHeightPx > 0 ? `${SETTINGS.widgetHeightPx}px` : "auto");
+  document.documentElement.style.setProperty("--minGuardW", SETTINGS.widgetWidthPx > 0 ? "0" : "1");
+  document.documentElement.style.setProperty("--minGuardH", SETTINGS.widgetHeightPx > 0 ? "0" : "1");
+
+  const rgba = hexToRgbaString(SETTINGS.bgColor, SETTINGS.bgAlpha);
+  if (rgba) document.documentElement.style.setProperty("--bgColorRGBA", rgba);
+  else document.documentElement.style.removeProperty("--bgColorRGBA");
+
+  loadGoogleFontFamily(SETTINGS.fontName);
+
+  if (!STATE.rtActive) setBgSolid();
 }
 
 function setBgSolid() {
-  const solid = getComputedStyle(document.documentElement)
-    .getPropertyValue("--bgColorRGBA")
-    .trim();
-
-  document.documentElement.style.setProperty(
-    "--bgFill",
-    solid || runtimeConfig.bgColor
-  );
+  const solid = getComputedStyle(document.documentElement).getPropertyValue("--bgColorRGBA").trim();
+  document.documentElement.style.setProperty("--bgFill", solid || SETTINGS.bgColor);
 }
 
 function buildRealtimeGradient() {
-  const colors =
-    runtimeConfig.rtPreset === "custom"
-      ? [runtimeConfig.rtC1, runtimeConfig.rtC2, runtimeConfig.rtC3, runtimeConfig.rtC4]
-      : PRESETS[runtimeConfig.rtPreset] || PRESETS.poulie;
+  const alpha = SETTINGS.bgAlpha;
+  const colors = SETTINGS.rtPreset === "custom"
+    ? [SETTINGS.rtC1, SETTINGS.rtC2, SETTINGS.rtC3, SETTINGS.rtC4]
+    : (PRESETS[SETTINGS.rtPreset] || PRESETS.poulie);
 
-  const rgbaColors = colors
-    .map((color) => hexToRgbaString(color, runtimeConfig.bgAlpha) || color)
-    .filter(Boolean);
-
-  return `linear-gradient(${runtimeConfig.rtAngle}deg, ${rgbaColors.join(", ")})`;
+  const rgba = colors.map(color => hexToRgbaString(color, alpha) || color).filter(Boolean);
+  const angle = Math.max(0, Math.min(360, Number(SETTINGS.rtAngle || 135)));
+  return `linear-gradient(${angle}deg, ${rgba.join(", ")})`;
 }
 
 function startHueCycle() {
-  clearInterval(state.rtHueTimer);
+  clearInterval(STATE.rtHueTimer);
 
-  if (!runtimeConfig.rtHueCycle) {
-    document.documentElement.style.setProperty(
-      "--rtHue",
-      `${runtimeConfig.rtHueDeg}deg`
-    );
+  if (!SETTINGS.rtHueCycle) {
+    document.documentElement.style.setProperty("--rtHue", `${Math.max(0, Math.min(360, SETTINGS.rtHueDeg || 0))}deg`);
     return;
   }
 
   let hue = 0;
   document.documentElement.style.setProperty("--rtHue", "0deg");
-
-  state.rtHueTimer = setInterval(() => {
+  STATE.rtHueTimer = setInterval(() => {
     hue = (hue + 6) % 360;
     document.documentElement.style.setProperty("--rtHue", `${hue}deg`);
   }, 80);
 }
 
 function stopHueCycle() {
-  clearInterval(state.rtHueTimer);
-  state.rtHueTimer = null;
+  clearInterval(STATE.rtHueTimer);
+  STATE.rtHueTimer = null;
   document.documentElement.style.setProperty("--rtHue", "0deg");
-}
-
-function iconFor(kind) {
-  switch (kind) {
-    case "follower":
-      return runtimeConfig.iconFollower;
-    case "subscriber":
-      return runtimeConfig.iconSubscriber;
-    case "tip":
-      return runtimeConfig.iconTip;
-    case "cheer":
-      return runtimeConfig.iconCheer;
-    default:
-      return "✦";
-  }
 }
 
 function enabledCategories() {
   const categories = [];
-
-  if (runtimeConfig.showFollower) categories.push("follower");
-  if (runtimeConfig.showSubscriber) categories.push("subscriber");
-  if (runtimeConfig.showTip) categories.push("tip");
-  if (runtimeConfig.showCheer) categories.push("cheer");
-
+  if (SETTINGS.showFollower) categories.push("follower");
+  if (SETTINGS.showSubscriber) categories.push("subscriber");
+  if (SETTINGS.showTip) categories.push("tip");
+  if (SETTINGS.showCheer) categories.push("cheer");
   return categories;
 }
 
-function formatMoney(amount) {
-  const amountString = Number(amount).toLocaleString(runtimeConfig.locale || undefined, {
-    minimumFractionDigits: runtimeConfig.showCents ? 2 : 0,
-    maximumFractionDigits: 2,
-  });
-
-  const symbol = runtimeConfig.currencySymbol || "";
-  const space = runtimeConfig.currencySpace ? " " : "";
-
-  return runtimeConfig.currencyPosition === "after"
-    ? `${amountString}${space}${symbol}`
-    : `${symbol}${space}${amountString}`;
+function iconFor(kind) {
+  switch (kind) {
+    case "follower": return SETTINGS.iconFollower;
+    case "subscriber": return SETTINGS.iconSubscriber;
+    case "tip": return SETTINGS.iconTip;
+    case "cheer": return SETTINGS.iconCheer;
+    default: return "✦";
+  }
 }
 
 function formatEntry(kind) {
   switch (kind) {
     case "follower":
-      if (!state.latest.follower) return null;
-      return {
-        icon: iconFor("follower"),
-        text: `${state.latest.follower.name}`,
-      };
+      if (!STATE.latest.follower) return null;
+      return { icon: iconFor("follower"), text: `${STATE.latest.follower.name}` };
 
     case "subscriber": {
-      if (!state.latest.subscriber) return null;
-
-      const count =
-        runtimeConfig.subMonthsSource === "months"
-          ? state.latest.subscriber.months || 0
-          : state.latest.subscriber.streak || 0;
-
-      const suffix =
-        runtimeConfig.showSubMonths && count > 0
-          ? ` ${runtimeConfig.subMonthsPrefix}${count}`
-          : "";
-
-      return {
-        icon: iconFor("subscriber"),
-        text: `${state.latest.subscriber.name}${suffix}`,
-      };
+      if (!STATE.latest.subscriber) return null;
+      const subscriber = STATE.latest.subscriber;
+      const count = SETTINGS.subMonthsSource === "months" ? (subscriber.months || 0) : (subscriber.streak || 0);
+      const suffix = SETTINGS.showSubMonths && count > 0 ? ` ${SETTINGS.subMonthsPrefix}${count}` : "";
+      return { icon: iconFor("subscriber"), text: `${subscriber.name}${suffix}` };
     }
 
-    case "tip":
-      if (!state.latest.tip) return null;
-      return {
-        icon: iconFor("tip"),
-        text: `${state.latest.tip.name} ${formatMoney(state.latest.tip.amount)}`,
-      };
+    case "tip": {
+      if (!STATE.latest.tip) return null;
+      const tip = STATE.latest.tip;
+      const amountString = tip.amount != null
+        ? Number(tip.amount).toLocaleString(SETTINGS.locale || undefined, {
+            minimumFractionDigits: SETTINGS.showCents ? 2 : 0,
+            maximumFractionDigits: 2
+          })
+        : "?";
+      const symbol = SETTINGS.currencySymbol || "";
+      const space = SETTINGS.currencySpace ? " " : "";
+      const valueText = SETTINGS.currencyPosition === "after"
+        ? `${amountString}${space}${symbol}`
+        : `${symbol}${space}${amountString}`;
+      return { icon: iconFor("tip"), text: `${tip.name} ${valueText}` };
+    }
 
-    case "cheer":
-      if (!state.latest.cheer) return null;
-      return {
-        icon: iconFor("cheer"),
-        text: `${state.latest.cheer.name} ${Number(state.latest.cheer.amount).toLocaleString()} bits`,
-      };
+    case "cheer": {
+      if (!STATE.latest.cheer) return null;
+      const cheer = STATE.latest.cheer;
+      const bits = cheer.amount != null ? Number(cheer.amount).toLocaleString() : "?";
+      return { icon: iconFor("cheer"), text: `${cheer.name} ${bits} bits` };
+    }
 
     default:
       return null;
@@ -430,19 +334,11 @@ function formatEntry(kind) {
 function currentCycleList() {
   const categories = enabledCategories();
   const list = categories
-    .map((kind) => ({ kind, entry: formatEntry(kind) }))
-    .filter((item) => item.entry);
+    .map(kind => ({ kind, entry: formatEntry(kind) }))
+    .filter(item => item.entry);
 
-  if (list.length === 0 && categories.length > 0) {
-    return [
-      {
-        kind: categories[0],
-        entry: {
-          icon: iconFor(categories[0]),
-          text: "Aguardando eventos…",
-        },
-      },
-    ];
+  if (list.length === 0 && categories.length) {
+    return [{ kind: categories[0], entry: { icon: iconFor(categories[0]), text: "Aguardando eventos…" } }];
   }
 
   return list;
@@ -459,14 +355,10 @@ function renderNormal() {
     return;
   }
 
-  if (state.index >= list.length) {
-    state.index = 0;
-  }
-
-  const { entry } = list[state.index];
+  if (STATE.index >= list.length) STATE.index = 0;
+  const { entry } = list[STATE.index];
 
   labelEl.classList.add("fade-out");
-
   setTimeout(() => {
     if (!iconEl || !labelEl) return;
     iconEl.textContent = entry.icon;
@@ -476,14 +368,12 @@ function renderNormal() {
 }
 
 function startRotation() {
-  clearInterval(state.timer);
+  clearInterval(STATE.timer);
   renderNormal();
-
-  const seconds = Math.max(1, Number(runtimeConfig.rotateSeconds || 6));
-
-  state.timer = setInterval(() => {
-    if (state.rtActive) return;
-    state.index += 1;
+  const seconds = Math.max(1, Number(SETTINGS.rotateSeconds || 6));
+  STATE.timer = setInterval(() => {
+    if (STATE.rtActive) return;
+    STATE.index += 1;
     renderNormal();
   }, seconds * 1000);
 }
@@ -492,53 +382,46 @@ function formatRealtimeMessage(listener, event) {
   const name = event?.name || event?.username || "—";
 
   if (listener === "follower-latest") {
-    return {
-      icon: iconFor("follower"),
-      text: `${name} just followed!`,
-    };
+    return { icon: iconFor("follower"), text: `${name} just followed!` };
   }
 
   if (listener === "subscriber-latest") {
     const months = resolveSubMonths(event);
-    const suffix =
-      runtimeConfig.showSubMonths && months > 0
-        ? ` ${runtimeConfig.subMonthsPrefix}${months}`
-        : "";
-
-    return {
-      icon: iconFor("subscriber"),
-      text: `${name} subscribed!${suffix}`,
-    };
+    const suffix = SETTINGS.showSubMonths && months > 0 ? ` ${SETTINGS.subMonthsPrefix}${months}` : "";
+    return { icon: iconFor("subscriber"), text: `${name} subscribed!${suffix}` };
   }
 
   if (listener === "tip-latest") {
-    return {
-      icon: iconFor("tip"),
-      text: `${name} donated ${formatMoney(event?.amount ?? 0)}`,
-    };
+    const amountString = event?.amount != null
+      ? Number(event.amount).toLocaleString(SETTINGS.locale || undefined, {
+          minimumFractionDigits: SETTINGS.showCents ? 2 : 0,
+          maximumFractionDigits: 2
+        })
+      : "?";
+    const symbol = SETTINGS.currencySymbol || "";
+    const space = SETTINGS.currencySpace ? " " : "";
+    const valueText = SETTINGS.currencyPosition === "after"
+      ? `${amountString}${space}${symbol}`
+      : `${symbol}${space}${amountString}`;
+    return { icon: iconFor("tip"), text: `${name} donated ${valueText}` };
   }
 
   if (listener === "cheer-latest") {
-    const bits = Number(event?.amount ?? 0).toLocaleString();
-
-    return {
-      icon: iconFor("cheer"),
-      text: `${name} cheered ${bits} bits!`,
-    };
+    const bits = event?.amount != null ? Number(event.amount).toLocaleString() : "?";
+    return { icon: iconFor("cheer"), text: `${name} cheered ${bits} bits!` };
   }
 
   return null;
 }
 
 function showRealtimeAlert(entry) {
-  if (!runtimeConfig.rtEnabled) return;
-  if (!rootEl || !iconEl || !labelEl || !entry) return;
+  if (!SETTINGS.rtEnabled || !rootEl || !iconEl || !labelEl || !entry) return;
 
-  state.rtActive = true;
-  clearTimeout(state.rtTimer);
+  STATE.rtActive = true;
+  clearTimeout(STATE.rtTimer);
 
   document.documentElement.style.setProperty("--rtFill", buildRealtimeGradient());
-  document.documentElement.style.setProperty("--rtSpeed", `${runtimeConfig.rtSpeed}s`);
+  document.documentElement.style.setProperty("--rtSpeed", `${Math.max(1, Math.min(30, Number(SETTINGS.rtSpeed || 3)))}s`);
 
   rootEl.classList.remove("rt");
   void rootEl.offsetWidth;
@@ -550,13 +433,9 @@ function showRealtimeAlert(entry) {
   labelEl.textContent = entry.text;
   labelEl.classList.remove("fade-out");
 
-  const duration = Math.max(
-    500,
-    Math.min(20000, Number(runtimeConfig.realtimeDurationMs || 3000))
-  );
-
-  state.rtTimer = setTimeout(() => {
-    state.rtActive = false;
+  const duration = Math.max(500, Math.min(20000, Number(SETTINGS.rtSeconds || 3) * 1000));
+  STATE.rtTimer = setTimeout(() => {
+    STATE.rtActive = false;
     stopHueCycle();
     rootEl.classList.remove("rt");
     setBgSolid();
@@ -567,7 +446,6 @@ function showRealtimeAlert(entry) {
 
 function computeScaleFor(element) {
   if (!element) return 1;
-
   const parent = element.parentElement || document.body;
   const width = Math.max(1, parent.clientWidth || window.innerWidth);
   const height = Math.max(1, parent.clientHeight || window.innerHeight);
@@ -575,15 +453,13 @@ function computeScaleFor(element) {
   const baseWidth = Number(styles.getPropertyValue("--baseW") || 420) || 420;
   const baseHeight = Number(styles.getPropertyValue("--baseH") || 84) || 84;
   const scale = Math.min(width / baseWidth, height / baseHeight);
-
   return Math.max(0.1, Math.min(5, scale));
 }
 
 function applyResponsiveScale() {
-  const hasFixedWidth = runtimeConfig.widgetWidth > 0;
-  const hasFixedHeight = runtimeConfig.widgetHeight > 0;
-  const scale = hasFixedWidth || hasFixedHeight ? 1 : computeScaleFor(rootEl);
-
+  const hasFixedWidth = SETTINGS.widgetWidthPx > 0;
+  const hasFixedHeight = SETTINGS.widgetHeightPx > 0;
+  const scale = (hasFixedWidth || hasFixedHeight) ? 1 : computeScaleFor(rootEl);
   document.documentElement.style.setProperty("--scale", String(scale));
 }
 
@@ -592,9 +468,7 @@ function bindResizeObserver() {
 
   if (window.ResizeObserver) {
     if (resizeObserver) {
-      try {
-        resizeObserver.disconnect();
-      } catch (error) {}
+      try { resizeObserver.disconnect(); } catch (error) {}
     }
 
     resizeObserver = new ResizeObserver(() => applyResponsiveScale());
@@ -611,37 +485,36 @@ function bindResizeObserver() {
 
 function syncSessionData(session = {}) {
   if (session["follower-latest"]) {
-    state.latest.follower = {
-      name: session["follower-latest"].name || session["follower-latest"].username || "—",
+    STATE.latest.follower = {
+      name: session["follower-latest"].name || session["follower-latest"].username || "—"
     };
   }
 
   if (session["subscriber-latest"]) {
     const subscriber = session["subscriber-latest"];
     const months = resolveSubMonths(subscriber);
-
-    state.latest.subscriber = {
+    STATE.latest.subscriber = {
       name: subscriber.name || subscriber.username || "—",
+      tier: subscriber.tier || subscriber.plan || "",
       months,
-      streak: Number(subscriber.streak) || months,
+      streak: (Number(subscriber.streak) || 0) || months
     };
   }
 
   if (session["tip-latest"]) {
     const tip = session["tip-latest"];
-
-    state.latest.tip = {
+    STATE.latest.tip = {
       name: tip.name || tip.username || "Anônimo",
-      amount: Number(tip.amount || 0),
+      amount: tip.amount,
+      currency: tip.currency || ""
     };
   }
 
   if (session["cheer-latest"]) {
     const cheer = session["cheer-latest"];
-
-    state.latest.cheer = {
+    STATE.latest.cheer = {
       name: cheer.name || cheer.username || "—",
-      amount: Number(cheer.amount || 0),
+      amount: cheer.amount
     };
   }
 }
@@ -649,32 +522,32 @@ function syncSessionData(session = {}) {
 function updateLatestFromEvent(listener, event) {
   switch (listener) {
     case "follower-latest":
-      state.latest.follower = {
-        name: event?.name || event?.username || "—",
-      };
+      STATE.latest.follower = { name: event?.name || event?.username || "—" };
       break;
 
     case "subscriber-latest": {
       const months = resolveSubMonths(event || {});
-      state.latest.subscriber = {
+      STATE.latest.subscriber = {
         name: event?.name || event?.username || "—",
+        tier: event?.tier || event?.plan || "",
         months,
-        streak: Number(event?.streak) || months,
+        streak: (Number(event?.streak) || 0) || months
       };
       break;
     }
 
     case "tip-latest":
-      state.latest.tip = {
+      STATE.latest.tip = {
         name: event?.name || event?.username || "Anônimo",
-        amount: Number(event?.amount || 0),
+        amount: event?.amount,
+        currency: event?.currency || ""
       };
       break;
 
     case "cheer-latest":
-      state.latest.cheer = {
+      STATE.latest.cheer = {
         name: event?.name || event?.username || "—",
-        amount: Number(event?.amount || 0),
+        amount: event?.amount
       };
       break;
 
@@ -683,22 +556,6 @@ function updateLatestFromEvent(listener, event) {
   }
 
   return true;
-}
-
-function bindDebug() {
-  window.eventRotatorDebug = {
-    state,
-    renderNormal,
-    startRotation,
-    showRealtimeAlert,
-    simulate(listener, event) {
-      if (!updateLatestFromEvent(listener, event)) return;
-      const entry = formatRealtimeMessage(listener, event);
-      showRealtimeAlert(entry);
-    },
-  };
-
-  console.log("[event-rotator] Debug disponível em window.eventRotatorDebug");
 }
 
 function bindStreamElementsEvents() {
@@ -724,20 +581,16 @@ function bindStreamElementsEvents() {
 }
 
 export function init(options = {}) {
-  runtimeConfig = buildRuntimeConfig(options.fieldData || {});
+  initDom();
 
   const {
-    enableDebug = true,
     enableStreamElements = false,
+    fieldData = {}
   } = options;
 
-  initDom();
-  applyRuntimeStyles();
+  STATE.fieldData = fieldData;
+  applyFields(fieldData);
   bindResizeObserver();
-
-  if (enableDebug) {
-    bindDebug();
-  }
 
   if (enableStreamElements) {
     bindStreamElementsEvents();
