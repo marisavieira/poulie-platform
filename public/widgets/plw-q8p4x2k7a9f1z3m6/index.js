@@ -1,6 +1,7 @@
 import config from "./config.json" with { type: "json" };
 
 let ASSET_BASE = "";
+let runtimeConfig = { ...config };
 
 const state = {
   currentDayKey: getDayKey(),
@@ -58,6 +59,19 @@ function getOrCreateUser(username) {
   return state.users[key];
 }
 
+function buildRuntimeConfig(fieldData = {}) {
+  return {
+    ...config,
+    ...fieldData,
+    totalStamps: Number(fieldData.totalStamps ?? runtimeConfig.totalStamps),
+    displayDurationMs: Number(fieldData.displayDurationMs ?? runtimeConfig.displayDurationMs),
+    dayReset:
+      typeof fieldData.dayReset === "boolean"
+        ? fieldData.dayReset
+        : String(fieldData.dayReset ?? runtimeConfig.dayReset) === "true",
+  };
+}
+
 function openSprint() {
   ensureDayReset();
 
@@ -108,7 +122,7 @@ function checkInUser(username) {
     state.isStamping = false;
     state.stampingIndex = null;
 
-    if (user.stamps >= config.totalStamps) {
+    if (user.stamps >= runtimeConfig.totalStamps) {
       state.showConfetti = true;
 
       render();
@@ -142,7 +156,7 @@ function showForDuration() {
   state.hideTimeout = setTimeout(() => {
     state.visible = false;
     render();
-  }, config.displayDurationMs);
+  }, runtimeConfig.displayDurationMs);
 }
 
 function getActiveUser() {
@@ -190,14 +204,14 @@ function render() {
             </svg>
         </div>
         <div>
-          <h1 class="focus-card__title">${user.username} ${config.titleSuffix}</h1>
-          <p class="focus-card__subtitle">${config.checkInCommand} para ganhar seu selo</p>
+          <h1 class="focus-card__title">${user.username} ${runtimeConfig.titleSuffix}</h1>
+          <p class="focus-card__subtitle">${runtimeConfig.checkInCommand} para ganhar seu selo</p>
         </div>
       </div>
 
       <div class="focus-card__grid-wrap">
         <div class="focus-card__grid">
-          ${renderStamps(config.totalStamps, user.stamps)}
+          ${renderStamps(runtimeConfig.totalStamps, user.stamps)}
         </div>
 
         ${state.isStamping ? renderStampOverlay(state.stampingIndex) : ""}
@@ -274,12 +288,12 @@ function bindDebugCommands() {
 function handleChatCommand(username, message) {
   const text = String(message).trim().toLowerCase();
 
-  if (text === config.openSprintCommand.toLowerCase()) {
+  if (text === runtimeConfig.openSprintCommand.toLowerCase()) {
     openSprint();
     return;
   }
 
-  if (text === config.checkInCommand.toLowerCase()) {
+  if (text === runtimeConfig.checkInCommand.toLowerCase()) {
     checkInUser(username);
   }
 }
@@ -321,6 +335,7 @@ export function init(options = {}) {
   ensureDayReset();
 
   ASSET_BASE = options.assetBaseUrl || "";
+  runtimeConfig = buildRuntimeConfig(options.fieldData || {});
 
   const {
     enableDebug = true,

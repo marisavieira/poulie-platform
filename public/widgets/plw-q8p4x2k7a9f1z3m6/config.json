@@ -5,7 +5,7 @@
   "checkInCommand": "!i",
   "openSprintCommand": "!card",
   "totalStamps": 6,
-  "displayDurationMs": 50000,
+  "displayDurationMs": 5000,
   "dayReset": true,
   "stampEmptyImage": "",
   "stampFilledImage": ""
