@@ -1,0 +1,33 @@
+{
+  "id": "plw-m4x8z2k7p9a1q5n3",
+  "name": "chat-todo",
+  "title": "Chat To Do",
+
+  "addCommand": "!add",
+  "deleteCommand": "!del",
+  "doneCommand": "!done",
+  "focusCommand": "!focus",
+  "viewCommand": "!todo",
+  "clearCommand": "!clearTodo",
+
+  "orderMode": "groupByUserTodoDone",
+
+  "allowViewersAdd": true,
+  "allowViewersDeleteOwn": true,
+  "allowViewersDoneOwn": true,
+  "allowViewersFocusOwn": true,
+
+  "streamerOnlyClear": true,
+  "streamerCanManageAll": true,
+
+  "maxTasksPerUser": 10,
+  "maxTaskLength": 80,
+
+  "showCompletedTasks": true,
+  "showProgress": true,
+  "showCurrentFocus": true,
+
+  "emptyText": "Nenhuma tarefa ainda",
+  "currentFocusTitle": "Focando agora",
+  "todoTitle": "Chat To Do"
+}

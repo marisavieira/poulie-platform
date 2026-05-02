@@ -1,0 +1,82 @@
+:root {
+  --bg: #151515;
+  --card: #1f1f1f;
+  --text: #ffffff;
+  --muted: #9f9f9f;
+  --accent: #ffd166;
+  --focus: #8ecae6;
+  --done: #777777;
+}
+
+body {
+  margin: 0;
+  font-family: sans-serif;
+  color: var(--text);
+}
+
+.chatTodo {
+  width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chatTodo__focus {
+  background: var(--card);
+  padding: 16px;
+  border-radius: 16px;
+}
+
+.chatTodo__focusLabel {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.chatTodo__focusTask {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.chatTodo__progress {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.chatTodo__list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chatTodo__user {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.chatTodo__username {
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.chatTodo__tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chatTodo__task {
+  display: flex;
+  gap: 8px;
+}
+
+.chatTodo__task.is-focused {
+  color: var(--focus);
+  font-weight: bold;
+}
+
+.chatTodo__task.is-completed {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
