@@ -1,4 +1,13 @@
-import config from "./config.json" assert { type: "json" };
+const config = {
+  id: "plw-m4x8z2k7p9a1q5n3",
+
+  commands: {
+    add: "!add",
+    done: "!done",
+    delete: "!del",
+    focus: "!focus",
+  },
+};
 
 const state = {
   tasks: [],
@@ -75,6 +84,8 @@ function setupStreamElementsEvents() {
     const message = event.text?.trim();
 
     if (!message) return;
+
+    console.log("[chat]", username, message);
 
     handleCommand(username, message);
   });
@@ -252,4 +263,4 @@ function renderTasks() {
       taskList.appendChild(userBlock);
     }
   );
-}
+}s
