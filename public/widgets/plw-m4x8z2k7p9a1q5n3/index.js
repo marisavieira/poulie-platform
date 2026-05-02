@@ -172,6 +172,17 @@ function handleDelete(username, taskId) {
   renderTasks();
 }
 
+function isStreamer(username) {
+  const channelName =
+    window.SE_API?.store?.channel?.username ||
+    window.SE_API?.store?.channel?.name ||
+    "";
+
+  return (
+    username.toLowerCase() === channelName.toLowerCase()
+  );
+}
+
 function handleFocus(username, taskId) {
   state.tasks.forEach((task) => {
     if (task.username === username) {
@@ -189,7 +200,9 @@ function handleFocus(username, taskId) {
 
   task.focused = true;
 
-  state.focusedTask = task;
+  if (isStreamer(username)) {
+    state.focusedTask = task;
+  }
 
   renderTasks();
 }
