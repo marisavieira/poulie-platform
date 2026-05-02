@@ -6,6 +6,7 @@ const config = {
     done: "!done",
     delete: "!del",
     focus: "!focus",
+    check: "!check",
   },
 };
 
@@ -99,6 +100,7 @@ function handleCommand(username, message, isBroadcaster = false) {
     done,
     delete: del,
     focus,
+    check
   } = widgetConfig.commands;
 
   if (message.startsWith(add)) {
@@ -118,6 +120,11 @@ function handleCommand(username, message, isBroadcaster = false) {
 
   if (message.startsWith(focus)) {
     handleFocus(username, message.replace(focus, "").trim(), isBroadcaster);
+  }
+
+  if (message.startsWith(check)) {
+    handleCheck(username);
+    return;
   }
 }
 
@@ -207,6 +214,38 @@ function handleFocus(username, taskId, isBroadcaster = false) {
   }
 
   renderTasks();
+}
+
+function sendChatMessage(message) {
+  if (!window.SE_API?.chatMessage) {
+    console.warn("[chat-todo] SE_API.chatMessage não disponível:", message);
+    return;
+  }
+
+  window.SE_API.chatMessage(message);
+}
+
+function handleCheck(username) {
+  const pendingTasks = state.tasks.filter(
+    (task) =>
+      task.username === username &&
+      !task.completed
+  );
+
+  if (!pendingTasks.length) {
+    sendChatMessage(
+      `@${username}, você não tem nenhuma tarefa pendente no momento.`
+    );
+    return;
+  }
+
+  const taskList = pendingTasks
+    .map((task) => `${task.id}. ${task.text}`)
+    .join(" | ");
+
+  sendChatMessage(
+    `@${username}, suas tarefas pendentes: ${taskList}`
+  );
 }
 
 function renderTasks() {

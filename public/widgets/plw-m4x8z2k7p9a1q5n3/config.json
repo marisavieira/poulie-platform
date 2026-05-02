@@ -9,6 +9,7 @@
   "focusCommand": "!focus",
   "viewCommand": "!todo",
   "clearCommand": "!clearTodo",
+  "checkommand": "!check",
 
   "orderMode": "groupByUserTodoDone",
 
