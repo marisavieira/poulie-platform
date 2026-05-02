@@ -263,4 +263,4 @@ function renderTasks() {
       taskList.appendChild(userBlock);
     }
   );
-}s
+}
