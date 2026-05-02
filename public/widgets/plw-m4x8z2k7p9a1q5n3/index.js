@@ -87,11 +87,13 @@ function setupStreamElementsEvents() {
 
     console.log("[chat]", username, message);
 
-    handleCommand(username, message);
+    const isBroadcaster = checkIsBroadcaster(event);
+
+    handleCommand(username, message, isBroadcaster);
   });
 }
 
-function handleCommand(username, message) {
+function handleCommand(username, message, isBroadcaster = false) {
   const {
     add,
     done,
@@ -115,7 +117,7 @@ function handleCommand(username, message) {
   }
 
   if (message.startsWith(focus)) {
-    handleFocus(username, message.replace(focus, "").trim());
+    handleFocus(username, message.replace(focus, "").trim(), isBroadcaster);
   }
 }
 
@@ -183,7 +185,7 @@ function isStreamer(username) {
   );
 }
 
-function handleFocus(username, taskId) {
+function handleFocus(username, taskId, isBroadcaster = false) {
   state.tasks.forEach((task) => {
     if (task.username === username) {
       task.focused = false;
@@ -200,7 +202,7 @@ function handleFocus(username, taskId) {
 
   task.focused = true;
 
-  if (isStreamer(username)) {
+  if (isBroadcaster) {
     state.focusedTask = task;
   }
 
@@ -276,4 +278,28 @@ function renderTasks() {
       taskList.appendChild(userBlock);
     }
   );
+}
+
+function checkIsBroadcaster(event) {
+  const badges = event?.badges || event?.tags?.badges || "";
+
+  if (typeof badges === "string") {
+    return badges.includes("broadcaster");
+  }
+
+  if (Array.isArray(badges)) {
+    return badges.some((badge) => {
+      return (
+        badge.type === "broadcaster" ||
+        badge.name === "broadcaster" ||
+        badge._id === "broadcaster"
+      );
+    });
+  }
+
+  if (typeof badges === "object" && badges !== null) {
+    return Boolean(badges.broadcaster);
+  }
+
+  return false;
 }
