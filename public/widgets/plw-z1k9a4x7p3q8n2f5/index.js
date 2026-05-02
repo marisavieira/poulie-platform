@@ -346,7 +346,7 @@ function currentCycleList() {
   const list = categories.map(kind => ({ kind, entry: formatEntry(kind) })).filter(item => item.entry);
 
   if (list.length === 0 && categories.length) {
-    return [{ kind: categories[0], entry: { icon: iconFor(categories[0]), text: "Aguardando eventos…" } }];
+    return [{ kind: categories[0], entry: { icon: iconFor(categories[0]), text: "Awaiting events…" } }];
   }
 
   return list;
@@ -359,7 +359,7 @@ function renderNormal() {
 
   if (list.length === 0) {
     iconEl.textContent = "✦";
-    labelEl.textContent = "Aguardando eventos…";
+    labelEl.textContent = "Awaiting events...";
     return;
   }
 
