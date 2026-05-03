@@ -22,6 +22,7 @@ export function init(options = {}) {
 
   applyFieldData(options.fieldData || {});
   createLayout();
+  startCommandSlider();
 
   if (options.enableStreamElements) {
     setupStreamElementsEvents();
@@ -58,14 +59,47 @@ function createLayout() {
         </div>
       </div>
 
-      <div class="chatTodo__progress" id="progressText">
-        0/0 completed
+      <div class="chatTodo__meta">
+        <div class="chatTodo__commandSlide" id="commandSlide">
+          !add tarefa
+        </div>
+
+        <div class="chatTodo__progress" id="progressText">
+          0/0 completed
+        </div>
       </div>
 
       <div class="chatTodo__list" id="taskList"></div>
 
     </div>
   `;
+}
+
+function startCommandSlider() {
+  const commands = [
+    `${widgetConfig.commands.add} tarefa`,
+    `${widgetConfig.commands.done} 1`,
+    `${widgetConfig.commands.delete} 1`,
+    `${widgetConfig.commands.focus} 1`,
+  ];
+
+  const commandSlide = document.getElementById("commandSlide");
+
+  if (!commandSlide) return;
+
+  let index = 0;
+
+  commandSlide.textContent = commands[index];
+
+  setInterval(() => {
+    commandSlide.classList.add("is-changing");
+
+    setTimeout(() => {
+      index = (index + 1) % commands.length;
+      commandSlide.textContent = commands[index];
+      commandSlide.classList.remove("is-changing");
+    }, 250);
+  }, 3500);
 }
 
 function setupStreamElementsEvents() {
