@@ -15,7 +15,7 @@ body {
 }
 
 .chatTodo {
-  width: 420px;
+  width: var(--widget-width, 420px);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -24,7 +24,7 @@ body {
 .chatTodo__focus {
   background: var(--card);
   padding: 16px;
-  border-radius: 16px;
+  border-radius: var(--radius, 16px);
 }
 
 .chatTodo__focusLabel {
@@ -51,7 +51,7 @@ body {
 
 .chatTodo__user {
   background: var(--card);
-  border-radius: 16px;
+  border-radius: var(--radius, 16px);
   padding: 16px;
 }
 

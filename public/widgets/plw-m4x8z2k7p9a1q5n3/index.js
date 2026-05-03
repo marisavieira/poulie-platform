@@ -22,11 +22,26 @@ export function init(options = {}) {
 
   applyFieldData(options.fieldData || {});
   createLayout();
-  startCommandSlider();
+
+  if (widgetConfig.settings.commandSliderEnabled) {
+    startCommandSlider();
+  }
 
   if (options.enableStreamElements) {
     setupStreamElementsEvents();
   }
+}
+
+function applyTheme(fieldData) {
+  const root = document.documentElement;
+
+  root.style.setProperty("--widget-width", fieldData.widgetWidth || "420px");
+  root.style.setProperty("--card", fieldData.backgroundColor || "#1f1f1f");
+  root.style.setProperty("--text", fieldData.textColor || "#ffffff");
+  root.style.setProperty("--muted", fieldData.mutedColor || "#9f9f9f");
+  root.style.setProperty("--accent", fieldData.accentColor || "#ffd166");
+  root.style.setProperty("--focus", fieldData.focusColor || "#8ecae6");
+  root.style.setProperty("--radius", fieldData.borderRadius || "16px");
 }
 
 function applyFieldData(fieldData) {
@@ -41,6 +56,29 @@ function applyFieldData(fieldData) {
 
   widgetConfig.commands.focus =
     fieldData.focusCommand || widgetConfig.commands.focus;
+
+  widgetConfig.commands.check =
+    fieldData.checkCommand || widgetConfig.commands.check;
+
+  widgetConfig.settings = {
+    ...widgetConfig.settings,
+    commandSliderEnabled:
+      fieldData.commandSliderEnabled ?? true,
+    commandSliderInterval:
+      Number(fieldData.commandSliderInterval) || 3500,
+    showCompletedTasks:
+      fieldData.showCompletedTasks ?? true,
+    showProgress:
+      fieldData.showProgress ?? true,
+    orderMode:
+      fieldData.orderMode || "groupByUserTodoDone",
+    maxTasksPerUser:
+      Number(fieldData.maxTasksPerUser) || 10,
+    maxTaskLength:
+      Number(fieldData.maxTaskLength) || 80,
+  };
+
+  applyTheme(fieldData);
 }
 
 function createLayout() {
@@ -77,10 +115,10 @@ function createLayout() {
 
 function startCommandSlider() {
   const commands = [
-    `${widgetConfig.commands.add} tarefa`,
-    `${widgetConfig.commands.done} 1`,
-    `${widgetConfig.commands.delete} 1`,
-    `${widgetConfig.commands.focus} 1`,
+    `${widgetConfig.commands.add} task name`,
+    `${widgetConfig.commands.done} task number`,
+    `${widgetConfig.commands.delete} task number`,
+    `${widgetConfig.commands.focus} task number`,
   ];
 
   const commandSlide = document.getElementById("commandSlide");
@@ -99,7 +137,7 @@ function startCommandSlider() {
       commandSlide.textContent = commands[index];
       commandSlide.classList.remove("is-changing");
     }, 250);
-  }, 3500);
+  }, widgetConfig.settings.commandSliderInterval);
 }
 
 function setupStreamElementsEvents() {
