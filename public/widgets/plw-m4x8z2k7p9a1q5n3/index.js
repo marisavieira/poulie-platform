@@ -16,6 +16,7 @@ const state = {
 };
 
 let widgetConfig = structuredClone(config);
+let commandSliderIntervalId = null;
 
 export function init(options = {}) {
   console.log("[chat-todo] iniciado");
@@ -114,6 +115,11 @@ function createLayout() {
 }
 
 function startCommandSlider() {
+  if (commandSliderIntervalId) {
+    clearInterval(commandSliderIntervalId);
+    commandSliderIntervalId = null;
+  }
+
   const commands = [
     `${widgetConfig.commands.add} task name`,
     `${widgetConfig.commands.done} task number`,
@@ -129,7 +135,7 @@ function startCommandSlider() {
 
   commandSlide.textContent = commands[index];
 
-  setInterval(() => {
+  commandSliderIntervalId = setInterval(() => {
     commandSlide.classList.add("is-changing");
 
     setTimeout(() => {
@@ -141,6 +147,20 @@ function startCommandSlider() {
 }
 
 function setupStreamElementsEvents() {
+  window.addEventListener("onWidgetLoad", (obj) => {
+    console.log("[chat-todo] onWidgetLoad recebido", obj.detail);
+
+    const fieldData = obj?.detail?.fieldData || {};
+
+    applyFieldData(fieldData);
+    createLayout();
+    renderTasks();
+
+    if (widgetConfig.settings.commandSliderEnabled) {
+      startCommandSlider();
+    }
+  });
+
   window.addEventListener("onEventReceived", (obj) => {
     const listener = obj.detail.listener;
 
