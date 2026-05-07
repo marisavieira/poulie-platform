@@ -466,7 +466,7 @@ function renderTasks() {
                   </span>
                 </div>
 
-                <span class="taskText">
+                <span class="taskText chatTodo__taskText">
                   ${task.text}
                 </span>
               </div>
