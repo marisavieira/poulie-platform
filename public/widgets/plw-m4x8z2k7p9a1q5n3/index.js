@@ -404,8 +404,7 @@ function renderTasks() {
   if (state.focusedTask) {
     document.getElementById(
       "focusTask"
-    ).textContent =
-      `${state.focusedTask.text}`;
+    ).textContent = `${state.focusedTask.text}`;
   }
 
   taskList.innerHTML = "";
@@ -420,43 +419,65 @@ function renderTasks() {
     groupedUsers[task.username].push(task);
   });
 
-  Object.entries(groupedUsers).forEach(
-    ([username, tasks]) => {
-      const userBlock = document.createElement("div");
+  Object.entries(groupedUsers).forEach(([username, tasks]) => {
+    const userBlock = document.createElement("div");
 
-      userBlock.className = "chatTodo__user";
+    userBlock.className = "chatTodo__user";
 
-      userBlock.innerHTML = `
-        <div class="chatTodo__username">
-          ${username}
-        </div>
+    userBlock.innerHTML = `
+      <div class="chatTodo__username">
+        ${username}
+      </div>
 
-        <div class="chatTodo__tasks">
-          ${tasks
-            .map((task) => {
-              return `
-                <div class="
-                  chatTodo__task
-                  ${task.completed ? "is-completed" : ""}
-                  ${task.focused ? "is-focused" : ""}
-                ">
+      <div class="chatTodo__tasks">
+        ${tasks
+          .map((task) => {
+            return `
+              <div class="
+                chatTodo__task
+                ${task.completed ? "is-completed" : ""}
+                ${task.focused ? "is-focused" : ""}
+              ">
+                <div class="chatTodo__taskCheck">
+                  <div class="
+                    chatTodo__checkbox
+                    ${task.completed ? "is-checked" : ""}
+                  ">
+                    ${
+                      task.completed
+                        ? `
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                              d="M20 6L9 17L4 12"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="3"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        `
+                        : ""
+                    }
+                  </div>
+
                   <span class="taskId">
                     ${task.id}.
                   </span>
-
-                  <span class="taskText">
-                    ${task.text}
-                  </span>
                 </div>
-              `;
-            })
-            .join("")}
-        </div>
-      `;
 
-      taskList.appendChild(userBlock);
-    }
-  );
+                <span class="taskText">
+                  ${task.text}
+                </span>
+              </div>
+            `;
+          })
+          .join("")}
+      </div>
+    `;
+
+    taskList.appendChild(userBlock);
+  });
 
   setupLoopScroll();
 }

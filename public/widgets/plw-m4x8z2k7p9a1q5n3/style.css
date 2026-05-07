@@ -140,3 +140,44 @@ body {
     transform: translateY(-50%);
   }
 }
+
+.chatTodo__taskCheck {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: fit-content;
+}
+
+.chatTodo__checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 2px solid var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.chatTodo__checkbox svg {
+  width: 12px;
+  height: 12px;
+}
+
+.chatTodo__checkbox.is-checked {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #111;
+}
+
+.chatTodo__task.is-completed .taskId {
+  opacity: 0.7;
+}
+
+.chatTodo__task.is-completed .chatTodo__checkbox {
+  transform: scale(1.05);
+}
