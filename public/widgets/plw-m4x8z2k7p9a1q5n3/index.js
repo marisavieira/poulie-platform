@@ -33,33 +33,77 @@ export function init(options = {}) {
   }
 }
 
-function applyTheme(fieldData) {
+function getFieldValue(fieldData, key, fallback) {
+  const field = fieldData?.[key];
+
+  if (field && typeof field === "object" && "value" in field) {
+    return field.value ?? fallback;
+  }
+
+  return field ?? fallback;
+}
+
+function applyTheme(fieldData = {}) {
   const root = document.documentElement;
 
-  root.style.setProperty("--widget-width", fieldData.widgetWidth || "420px");
-  root.style.setProperty("--card", fieldData.backgroundColor || "#cad6ef");
-  root.style.setProperty("--text", fieldData.textColor || "#3b3c40");
-  root.style.setProperty("--muted", fieldData.mutedColor || "#9f9f9f");
-  root.style.setProperty("--accent", fieldData.accentColor || "#7181ad");
-  root.style.setProperty("--focus", fieldData.focusColor || "#3d4460");
-  root.style.setProperty("--radius", fieldData.borderRadius || "16px");
+  root.style.setProperty(
+    "--widget-width",
+    getFieldValue(fieldData, "widgetWidth", "420px")
+  );
+
+  root.style.setProperty(
+    "--card",
+    getFieldValue(fieldData, "backgroundColor", "#1f1f1f")
+  );
+
+  root.style.setProperty(
+    "--text",
+    getFieldValue(fieldData, "textColor", "#ffffff")
+  );
+
+  root.style.setProperty(
+    "--muted",
+    getFieldValue(fieldData, "mutedColor", "#9f9f9f")
+  );
+
+  root.style.setProperty(
+    "--accent",
+    getFieldValue(fieldData, "accentColor", "#ffd166")
+  );
+
+  root.style.setProperty(
+    "--focus",
+    getFieldValue(fieldData, "focusColor", "#8ecae6")
+  );
+
+  root.style.setProperty(
+    "--radius",
+    getFieldValue(fieldData, "borderRadius", "16px")
+  );
+
+  console.log("[chat-todo] cores aplicadas:", {
+    card: getComputedStyle(root).getPropertyValue("--card"),
+    text: getComputedStyle(root).getPropertyValue("--text"),
+    accent: getComputedStyle(root).getPropertyValue("--accent"),
+    focus: getComputedStyle(root).getPropertyValue("--focus"),
+  });
 }
 
 function applyFieldData(fieldData) {
   widgetConfig.commands.add =
-    fieldData.addCommand || widgetConfig.commands.add;
+    getFieldValue(fieldData, "addCommand", widgetConfig.commands.add);
 
   widgetConfig.commands.done =
-    fieldData.doneCommand || widgetConfig.commands.done;
+    getFieldValue(fieldData, "doneCommand", widgetConfig.commands.done);
 
   widgetConfig.commands.delete =
-    fieldData.deleteCommand || widgetConfig.commands.delete;
+    getFieldValue(fieldData, "deleteCommand", widgetConfig.commands.delete);
 
   widgetConfig.commands.focus =
-    fieldData.focusCommand || widgetConfig.commands.focus;
+    getFieldValue(fieldData, "focusCommand", widgetConfig.commands.focus);
 
   widgetConfig.commands.check =
-    fieldData.checkCommand || widgetConfig.commands.check;
+    getFieldValue(fieldData, "checkCommand", widgetConfig.commands.check);
 
   widgetConfig.settings = {
     ...widgetConfig.settings,
