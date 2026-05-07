@@ -84,7 +84,11 @@ async function loadWidget() {
       window.location.hostname === "127.0.0.1" ||
       window.location.hostname === "localhost";
 
-    const enableStreamElements = mode === "streamelements";
+    const enableStreamElements =
+      mode === "streamelements" ||
+      Boolean(window.SE_API) ||
+      window.location.href.includes("streamelements");
+
     const enableDebug = mode === "streamelements" ? false : true;
 
     const baseUrl = isLocal ? `${window.location.origin}/public` : getBaseUrl();
@@ -99,11 +103,13 @@ async function loadWidget() {
     link.href = styleUrl;
     document.head.appendChild(link);
 
+    const widgetDataPromise = enableStreamElements
+      ? waitForStreamElementsWidgetData()
+      : Promise.resolve({ fieldData: {}, sessionData: {} });
+
     const mod = await import(moduleUrl);
 
-    const widgetData = enableStreamElements
-      ? await waitForStreamElementsWidgetData()
-      : { fieldData: {}, sessionData: {} };
+    const widgetData = await widgetDataPromise;
 
     mod.init({
       enableDebug,
