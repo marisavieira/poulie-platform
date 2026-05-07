@@ -36,11 +36,11 @@ function applyTheme(fieldData) {
   const root = document.documentElement;
 
   root.style.setProperty("--widget-width", fieldData.widgetWidth || "420px");
-  root.style.setProperty("--card", fieldData.backgroundColor || "#1f1f1f");
-  root.style.setProperty("--text", fieldData.textColor || "#ffffff");
+  root.style.setProperty("--card", fieldData.backgroundColor || "#cad6ef");
+  root.style.setProperty("--text", fieldData.textColor || "#3b3c40");
   root.style.setProperty("--muted", fieldData.mutedColor || "#9f9f9f");
-  root.style.setProperty("--accent", fieldData.accentColor || "#ffd166");
-  root.style.setProperty("--focus", fieldData.focusColor || "#8ecae6");
+  root.style.setProperty("--accent", fieldData.accentColor || "#7181ad");
+  root.style.setProperty("--focus", fieldData.focusColor || "#3d4460");
   root.style.setProperty("--radius", fieldData.borderRadius || "16px");
 }
 
