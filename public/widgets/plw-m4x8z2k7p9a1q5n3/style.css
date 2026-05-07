@@ -107,3 +107,37 @@ body {
   white-space: nowrap;
   text-align: right;
 }
+
+.chatTodo__listViewport {
+  max-height: 360px;
+  overflow: hidden;
+  position: relative;
+}
+
+.chatTodo__listTrack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chatTodo__listTrack.is-looping {
+  animation: chatTodoLoop var(--loop-duration, 20s) linear infinite;
+}
+
+.chatTodo__listTrack.is-looping:hover {
+  animation-play-state: paused;
+}
+
+.chatTodo__user.is-clone {
+  pointer-events: none;
+}
+
+@keyframes chatTodoLoop {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(-50%);
+  }
+}

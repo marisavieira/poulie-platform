@@ -138,7 +138,7 @@ function createLayout() {
         </div>
 
         <div class="chatTodo__focusTask" id="focusTask">
-          No task selected
+          não ta fazendo nada
         </div>
       </div>
 
@@ -148,11 +148,13 @@ function createLayout() {
         </div>
 
         <div class="chatTodo__progress" id="progressText">
-          0/0 completed
+          0/0 completadas
         </div>
       </div>
 
-      <div class="chatTodo__list" id="taskList"></div>
+      <div class="chatTodo__listViewport">
+        <div class="chatTodo__listTrack" id="taskList"></div>
+      </div>
 
     </div>
   `;
@@ -455,6 +457,8 @@ function renderTasks() {
       taskList.appendChild(userBlock);
     }
   );
+
+  setupLoopScroll();
 }
 
 function checkIsBroadcaster(event) {
@@ -479,4 +483,36 @@ function checkIsBroadcaster(event) {
   }
 
   return false;
+}
+
+function setupLoopScroll() {
+  const viewport = document.querySelector(".chatTodo__listViewport");
+  const track = document.getElementById("taskList");
+
+  if (!viewport || !track) return;
+
+  track.classList.remove("is-looping");
+
+  const originalItems = Array.from(track.children).filter(
+    (item) => !item.classList.contains("is-clone")
+  );
+
+  track.querySelectorAll(".is-clone").forEach((clone) => clone.remove());
+
+  if (!originalItems.length) return;
+
+  const needsScroll = track.scrollHeight > viewport.clientHeight;
+
+  if (!needsScroll) return;
+
+  originalItems.forEach((item) => {
+    const clone = item.cloneNode(true);
+    clone.classList.add("is-clone");
+    track.appendChild(clone);
+  });
+
+  const duration = Math.max(12, originalItems.length * 5);
+
+  track.style.setProperty("--loop-duration", `${duration}s`);
+  track.classList.add("is-looping");
 }
