@@ -21,8 +21,8 @@ let commandSliderIntervalId = null;
 export function init(options = {}) {
   console.log("[chat-todo] iniciado");
 
-  applyFieldData(options.fieldData || {});
   createLayout();
+  applyFieldData(options.fieldData || {});
 
   if (widgetConfig.settings.commandSliderEnabled) {
     startCommandSlider();
@@ -148,12 +148,14 @@ function startCommandSlider() {
 
 function setupStreamElementsEvents() {
   window.addEventListener("onWidgetLoad", (obj) => {
-    console.log("[chat-todo] onWidgetLoad recebido", obj.detail);
+    console.log("[chat-todo] onWidgetLoad recebido");
 
     const fieldData = obj?.detail?.fieldData || {};
 
+    console.log("[chat-todo] fieldData:", fieldData);
+
     applyFieldData(fieldData);
-    createLayout();
+
     renderTasks();
 
     if (widgetConfig.settings.commandSliderEnabled) {
