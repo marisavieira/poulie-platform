@@ -10,6 +10,10 @@ const config = {
     color: "!color",
     glow: "!glow",
   },
+  rewards: {
+    nameColor: "Nome colorido",
+    nameGlow: "Nome glowy",
+  },
 };
 
 const state = {
@@ -206,6 +210,71 @@ function startCommandSlider() {
   }, widgetConfig.settings.commandSliderInterval);
 }
 
+function handleNameColorRedemption(username, colorValue) {
+  const color = String(colorValue || "").trim();
+
+  if (!color.startsWith("#")) return;
+
+  if (!state.userStyles[username]) {
+    state.userStyles[username] = {};
+  }
+
+  state.userStyles[username].color = color;
+
+  renderTasks();
+}
+
+function handleNameGlowRedemption(username) {
+  if (!state.userStyles[username]) {
+    state.userStyles[username] = {};
+  }
+
+  state.userStyles[username].glow = true;
+
+  renderTasks();
+}
+
+function handleRedemption(event) {
+  const data = event?.data || event;
+
+  const username =
+    data.displayName ||
+    data.nick ||
+    data.username ||
+    data.name ||
+    "unknown";
+
+  const rewardTitle =
+    data.rewardTitle ||
+    data.reward?.title ||
+    data.title ||
+    data.redemption?.reward?.title ||
+    "";
+
+  const userInput =
+    data.message ||
+    data.text ||
+    data.input ||
+    data.redemption?.user_input ||
+    "";
+
+  console.log("[chat-todo] redemption:", {
+    username,
+    rewardTitle,
+    userInput,
+    data,
+  });
+
+  if (rewardTitle === widgetConfig.rewards.nameColor) {
+    handleNameColorRedemption(username, userInput);
+    return;
+  }
+
+  if (rewardTitle === widgetConfig.rewards.nameGlow) {
+    handleNameGlowRedemption(username);
+  }
+}
+
 function setupStreamElementsEvents() {
   window.addEventListener("onWidgetLoad", (obj) => {
     console.log("[chat-todo] onWidgetLoad recebido");
@@ -225,6 +294,11 @@ function setupStreamElementsEvents() {
 
   window.addEventListener("onEventReceived", (obj) => {
     const listener = obj.detail.listener;
+
+    if (listener.includes("redemption")) {
+      handleRedemption(obj.detail.event);
+      return;
+    }
 
     if (listener !== "message") return;
 
