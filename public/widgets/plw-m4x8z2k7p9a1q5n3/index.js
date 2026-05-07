@@ -89,7 +89,7 @@ function createLayout() {
 
       <div class="chatTodo__focus">
         <div class="chatTodo__focusLabel">
-          CURRENT FOCUS
+          o que poulie está fazendo agora
         </div>
 
         <div class="chatTodo__focusTask" id="focusTask">
@@ -337,7 +337,7 @@ function renderTasks() {
     document.getElementById(
       "focusTask"
     ).textContent =
-      `${state.focusedTask.username}: ${state.focusedTask.text}`;
+      `${state.focusedTask.text}`;
   }
 
   taskList.innerHTML = "";
