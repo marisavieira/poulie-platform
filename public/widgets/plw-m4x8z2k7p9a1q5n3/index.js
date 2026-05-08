@@ -559,11 +559,11 @@ async function sendChatMessage(message) {
           await response.text()
         );
       }
-
-      return;
     } catch (error) {
       console.warn("[chat-todo] erro ao enviar pelo Jebaited:", error);
     }
+
+    return;
   }
 
   if (!window.SE_API?.chatMessage) {
