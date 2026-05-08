@@ -22,8 +22,8 @@ const config = {
   },
 
   chatMessages: {
-    noPendingTasks: "você não tem nenhuma tarefa pendente no momento.",
-    pendingTasks: "suas tarefas pendentes:",
+    noPendingTasks: "you currently have no pending tasks",
+    pendingTasks: "here are your pending tasks:",
   }
 };
 
@@ -448,7 +448,7 @@ function handleCommand(username, message, isBroadcaster = false) {
     handleFocus(username, message.replace(focus, "").trim(), isBroadcaster);
   }
 
-  if (message.startsWith(check)) {
+  if (message === check) {
     handleCheck(username);
     return;
   }
