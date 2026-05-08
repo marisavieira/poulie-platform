@@ -17,6 +17,9 @@ const config = {
     nameColor5: "Name color 5",
     nameColor6: "Name color 6",
   },
+  jebaited: {
+    token: "",
+  }
 };
 
 const state = {
@@ -133,6 +136,10 @@ function applyFieldData(fieldData) {
     color4: getFieldValue(fieldData, "nameColor4", "#BFADFF"),
     color5: getFieldValue(fieldData, "nameColor5", "#8ECAE6"),
     color6: getFieldValue(fieldData, "nameColor6", "#F4A7B9"),
+  };  
+  
+  widgetConfig.jebaited = {
+    token: getFieldValue(fieldData, "jebaitedToken", ""),
   };
 
   widgetConfig.settings = {
@@ -517,7 +524,30 @@ function handleFocus(username, taskId, isBroadcaster = false) {
   renderTasks();
 }
 
-function sendChatMessage(message) {
+async function sendChatMessage(message) {
+  const token = widgetConfig.jebaited?.token?.trim();
+
+  if (token) {
+    try {
+      const url = `https://api.jebaited.net/botMsg/${token}/${encodeURIComponent(message)}`;
+
+      const response = await fetch(url, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        console.warn(
+          "[chat-todo] Jebaited falhou:",
+          await response.text()
+        );
+      }
+
+      return;
+    } catch (error) {
+      console.warn("[chat-todo] erro ao enviar pelo Jebaited:", error);
+    }
+  }
+
   if (!window.SE_API?.chatMessage) {
     console.warn("[chat-todo] SE_API.chatMessage não disponível:", message);
     return;
