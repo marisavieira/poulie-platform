@@ -404,12 +404,12 @@ function handleCommand(username, message, isBroadcaster = false) {
     check,
   } = widgetConfig.commands;
 
-  if (message.startsWith(add)) {
+  if (message === add || message.startsWith(add + " ")) {
     handleAdd(username, message.replace(add, "").trim());
     return;
   }
 
-  if (message.startsWith(done)) {
+  if (message === del || message.startsWith(del + " ")) {
     handleDone(username, message.replace(done, "").trim());
     return;
   }
@@ -419,7 +419,7 @@ function handleCommand(username, message, isBroadcaster = false) {
     return;
   }
 
-  if (message.startsWith(focus)) {
+  if (message === focus || message.startsWith(focus + " ")) {
     handleFocus(username, message.replace(focus, "").trim(), isBroadcaster);
   }
 
