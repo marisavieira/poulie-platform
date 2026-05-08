@@ -358,9 +358,17 @@ function setupStreamElementsEvents() {
   });
 
   window.addEventListener("onEventReceived", (obj) => {
+    console.log("[chat-todo] qualquer evento:", obj.detail);
     const listener = obj.detail.listener;
 
-    if (listener.includes("redemption")) {
+    console.log("[chat-todo] evento recebido:", obj.detail);
+
+    if (
+      listener === "event:test" ||
+      listener === "event" ||
+      listener?.includes("redemption") ||
+      listener?.includes("reward")
+    ) {
       handleRedemption(obj.detail.event);
       return;
     }
