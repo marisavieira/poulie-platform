@@ -24,6 +24,16 @@ const config = {
   chatMessages: {
     noPendingTasks: "you currently have no pending tasks",
     pendingTasks: "here are your pending tasks:",
+  },
+  permissions: {
+    allowEveryoneToAddTasks: true,
+    allowFollowersToAddTasks: false,
+    allowSubscribersToAddTasks: false,
+    allowVipsToAddTasks: false,
+    allowModeratorsToAddTasks: false,
+    allowStreamerToAddTasks: true,
+    blockedUsers: "",
+    blockBotsFromAddingTasks: true,
   }
 };
 
@@ -157,6 +167,49 @@ function applyFieldData(fieldData) {
       fieldData,
       "pendingTasksMessage",
       widgetConfig.chatMessages.pendingTasks
+    ),
+  };
+
+  widgetConfig.permissions = {
+    allowEveryoneToAddTasks: getFieldValue(
+      fieldData,
+      "allowEveryoneToAddTasks",
+      widgetConfig.permissions.allowEveryoneToAddTasks
+    ),
+    allowFollowersToAddTasks: getFieldValue(
+      fieldData,
+      "allowFollowersToAddTasks",
+      widgetConfig.permissions.allowFollowersToAddTasks
+    ),
+    allowSubscribersToAddTasks: getFieldValue(
+      fieldData,
+      "allowSubscribersToAddTasks",
+      widgetConfig.permissions.allowSubscribersToAddTasks
+    ),
+    allowVipsToAddTasks: getFieldValue(
+      fieldData,
+      "allowVipsToAddTasks",
+      widgetConfig.permissions.allowVipsToAddTasks
+    ),
+    allowModeratorsToAddTasks: getFieldValue(
+      fieldData,
+      "allowModeratorsToAddTasks",
+      widgetConfig.permissions.allowModeratorsToAddTasks
+    ),
+    allowStreamerToAddTasks: getFieldValue(
+      fieldData,
+      "allowStreamerToAddTasks",
+      widgetConfig.permissions.allowStreamerToAddTasks
+    ),
+    blockedUsers: getFieldValue(
+      fieldData,
+      "blockedUsers",
+      widgetConfig.permissions.blockedUsers
+    ),
+    blockBotsFromAddingTasks: getFieldValue(
+      fieldData,
+      "blockBotsFromAddingTasks",
+      widgetConfig.permissions.blockBotsFromAddingTasks
     ),
   };
 
@@ -416,11 +469,120 @@ function setupStreamElementsEvents() {
 
     const isBroadcaster = checkIsBroadcaster(event);
 
-    handleCommand(username, message, isBroadcaster);
+    handleCommand(username, message, isBroadcaster, event);
   });
 }
 
-function handleCommand(username, message, isBroadcaster = false) {
+function normalizeUsername(username) {
+  return String(username || "")
+    .trim()
+    .replace(/^@/, "")
+    .toLowerCase();
+}
+
+function getBlockedUsersList() {
+  return String(widgetConfig.permissions?.blockedUsers || "")
+    .split(/[,;\n]/)
+    .map(normalizeUsername)
+    .filter(Boolean);
+}
+
+function isKnownBot(username) {
+  const normalized = normalizeUsername(username);
+
+  const knownBots = [
+    "streamelements",
+    "streamlabs",
+    "nightbot",
+    "moobot",
+    "fossabot",
+    "wizebot",
+    "sery_bot",
+    "commanderroot",
+    "botrix",
+  ];
+
+  return knownBots.includes(normalized) || normalized.endsWith("bot");
+}
+
+function hasBadge(event, badgeName) {
+  const badges = event?.badges || event?.tags?.badges || "";
+
+  if (typeof badges === "string") {
+    return badges.toLowerCase().includes(badgeName);
+  }
+
+  if (Array.isArray(badges)) {
+    return badges.some((badge) => {
+      const type = String(badge.type || "").toLowerCase();
+      const name = String(badge.name || "").toLowerCase();
+      const id = String(badge._id || "").toLowerCase();
+
+      return (
+        type === badgeName ||
+        name === badgeName ||
+        id === badgeName
+      );
+    });
+  }
+
+  if (typeof badges === "object" && badges !== null) {
+    return Boolean(badges[badgeName]);
+  }
+
+  return false;
+}
+
+function getUserRoles(event, isBroadcaster = false) {
+  return {
+    broadcaster: isBroadcaster || hasBadge(event, "broadcaster"),
+    moderator: hasBadge(event, "moderator") || hasBadge(event, "mod"),
+    subscriber: hasBadge(event, "subscriber"),
+    vip: hasBadge(event, "vip"),
+    founder: hasBadge(event, "founder"),
+    follower: hasBadge(event, "follower"),
+  };
+}
+
+function canUserAddTask(username, event = {}, isBroadcaster = false) {
+  const normalizedUsername = normalizeUsername(username);
+
+  const blockedUsers = getBlockedUsersList();
+
+  if (blockedUsers.includes(normalizedUsername)) {
+    console.log("[chat-todo] usuário bloqueado para adicionar task:", username);
+    return false;
+  }
+
+  if (
+    widgetConfig.permissions?.blockBotsFromAddingTasks &&
+    isKnownBot(username)
+  ) {
+    console.log("[chat-todo] bot bloqueado para adicionar task:", username);
+    return false;
+  }
+
+  const roles = getUserRoles(event, isBroadcaster);
+  const permissions = widgetConfig.permissions || {};
+
+  if (permissions.allowEveryoneToAddTasks) return true;
+
+  if (permissions.allowStreamerToAddTasks && roles.broadcaster) return true;
+
+  if (permissions.allowModeratorsToAddTasks && roles.moderator) return true;
+
+  if (permissions.allowSubscribersToAddTasks && (roles.subscriber || roles.founder)) {
+    return true;
+  }
+
+  if (permissions.allowVipsToAddTasks && roles.vip) return true;
+
+  if (permissions.allowFollowersToAddTasks && roles.follower) return true;
+
+  return false;
+}
+
+function handleCommand(username, message, isBroadcaster = false, event = {}) {
   const {
     add,
     done,
@@ -430,6 +592,8 @@ function handleCommand(username, message, isBroadcaster = false) {
   } = widgetConfig.commands;
 
   if (message === add || message.startsWith(add + " ")) {
+    if (!canUserAddTask(username, event, isBroadcaster)) return;
+
     handleAdd(username, message.replace(add, "").trim());
     return;
   }
