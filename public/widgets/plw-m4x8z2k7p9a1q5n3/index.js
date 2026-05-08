@@ -268,7 +268,7 @@ function getRedemptionRewardTitle(data) {
     data.itemName ||
     data.redemption?.reward?.title ||
     data.redemption?.reward?.name ||
-    data.redemption?.reward ||
+    data.redemption ||
     ""
   );
 }
