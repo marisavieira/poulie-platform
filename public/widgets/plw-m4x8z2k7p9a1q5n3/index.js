@@ -6,13 +6,16 @@ const config = {
     done: "!done",
     delete: "!del",
     focus: "!focus",
-    check: "!check",
-    color: "!color",
-    glow: "!glow",
+    check: "!check"
   },
   rewards: {
-    nameColor: "Nome colorido",
     nameGlow: "Nome glowy",
+    nameColor1: "Name color 1",
+    nameColor2: "Name color 2",
+    nameColor3: "Name color 3",
+    nameColor4: "Name color 4",
+    nameColor5: "Name color 5",
+    nameColor6: "Name color 6",
   },
 };
 
@@ -112,11 +115,25 @@ function applyFieldData(fieldData) {
   widgetConfig.commands.check =
     getFieldValue(fieldData, "checkCommand", widgetConfig.commands.check);
 
-  widgetConfig.commands.color =
-    getFieldValue(fieldData, "colorCommand", "!color");
+  widgetConfig.rewards = {
+    ...widgetConfig.rewards,
+    nameGlow: getFieldValue(fieldData, "nameGlowReward", "Nome glowy"),
+    nameColor1: getFieldValue(fieldData, "nameColorReward1", "Name color 1"),
+    nameColor2: getFieldValue(fieldData, "nameColorReward2", "Name color 2"),
+    nameColor3: getFieldValue(fieldData, "nameColorReward3", "Name color 3"),
+    nameColor4: getFieldValue(fieldData, "nameColorReward4", "Name color 4"),
+    nameColor5: getFieldValue(fieldData, "nameColorReward5", "Name color 5"),
+    nameColor6: getFieldValue(fieldData, "nameColorReward6", "Name color 6"),
+  };
 
-  widgetConfig.commands.glow =
-    getFieldValue(fieldData, "glowCommand", "!glow");
+  widgetConfig.namePalette = {
+    color1: getFieldValue(fieldData, "nameColor1", "#CAD6EF"),
+    color2: getFieldValue(fieldData, "nameColor2", "#9CABE2"),
+    color3: getFieldValue(fieldData, "nameColor3", "#FFD166"),
+    color4: getFieldValue(fieldData, "nameColor4", "#BFADFF"),
+    color5: getFieldValue(fieldData, "nameColor5", "#8ECAE6"),
+    color6: getFieldValue(fieldData, "nameColor6", "#F4A7B9"),
+  };
 
   widgetConfig.settings = {
     ...widgetConfig.settings,
@@ -251,22 +268,45 @@ function handleRedemption(event) {
     data.redemption?.reward?.title ||
     "";
 
-  const userInput =
-    data.message ||
-    data.text ||
-    data.input ||
-    data.redemption?.user_input ||
-    "";
-
   console.log("[chat-todo] redemption:", {
     username,
     rewardTitle,
-    userInput,
     data,
   });
 
-  if (rewardTitle === widgetConfig.rewards.nameColor) {
-    handleNameColorRedemption(username, userInput);
+  const colorRewards = [
+    {
+      reward: widgetConfig.rewards.nameColor1,
+      color: widgetConfig.namePalette.color1,
+    },
+    {
+      reward: widgetConfig.rewards.nameColor2,
+      color: widgetConfig.namePalette.color2,
+    },
+    {
+      reward: widgetConfig.rewards.nameColor3,
+      color: widgetConfig.namePalette.color3,
+    },
+    {
+      reward: widgetConfig.rewards.nameColor4,
+      color: widgetConfig.namePalette.color4,
+    },
+    {
+      reward: widgetConfig.rewards.nameColor5,
+      color: widgetConfig.namePalette.color5,
+    },
+    {
+      reward: widgetConfig.rewards.nameColor6,
+      color: widgetConfig.namePalette.color6,
+    },
+  ];
+
+  const matchedColorReward = colorRewards.find(
+    (item) => item.reward === rewardTitle
+  );
+
+  if (matchedColorReward) {
+    handleNameColorRedemption(username, matchedColorReward.color);
     return;
   }
 
@@ -329,8 +369,6 @@ function handleCommand(username, message, isBroadcaster = false) {
     delete: del,
     focus,
     check,
-    color,
-    glow,
   } = widgetConfig.commands;
 
   if (message.startsWith(add)) {
@@ -356,42 +394,6 @@ function handleCommand(username, message, isBroadcaster = false) {
     handleCheck(username);
     return;
   }
-
-  if (message.startsWith(color)) {
-    handleColor(
-      username,
-      message.replace(color, "").trim()
-    );
-    return;
-  }
-
-  if (message.startsWith(glow)) {
-    handleGlow(username);
-    return;
-  }
-}
-
-function handleColor(username, colorValue) {
-  if (!colorValue) return;
-
-  if (!state.userStyles[username]) {
-    state.userStyles[username] = {};
-  }
-
-  state.userStyles[username].color = colorValue;
-
-  renderTasks();
-}
-
-function handleGlow(username) {
-  if (!state.userStyles[username]) {
-    state.userStyles[username] = {};
-  }
-
-  state.userStyles[username].glow =
-    !state.userStyles[username].glow;
-
-  renderTasks();
 }
 
 function handleAdd(username, content) {
