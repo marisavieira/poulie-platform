@@ -19,6 +19,11 @@ const config = {
   },
   jebaited: {
     token: "",
+  },
+
+  chatMessages: {
+    noPendingTasks: "você não tem nenhuma tarefa pendente no momento.",
+    pendingTasks: "suas tarefas pendentes:",
   }
 };
 
@@ -140,6 +145,19 @@ function applyFieldData(fieldData) {
   
   widgetConfig.jebaited = {
     token: getFieldValue(fieldData, "jebaitedToken", ""),
+  };
+
+  widgetConfig.chatMessages = {
+    noPendingTasks: getFieldValue(
+      fieldData,
+      "noPendingTasksMessage",
+      widgetConfig.chatMessages.noPendingTasks
+    ),
+    pendingTasks: getFieldValue(
+      fieldData,
+      "pendingTasksMessage",
+      widgetConfig.chatMessages.pendingTasks
+    ),
   };
 
   widgetConfig.settings = {
@@ -565,7 +583,7 @@ function handleCheck(username) {
 
   if (!pendingTasks.length) {
     sendChatMessage(
-      `@${username}, você não tem nenhuma tarefa pendente no momento.`
+      `@${username}, ${widgetConfig.chatMessages.noPendingTasks}`
     );
     return;
   }
@@ -575,7 +593,7 @@ function handleCheck(username) {
     .join(" | ");
 
   sendChatMessage(
-    `@${username}, suas tarefas pendentes: ${taskList}`
+    `@${username}, ${widgetConfig.chatMessages.pendingTasks} ${taskList}`
   );
 }
 
