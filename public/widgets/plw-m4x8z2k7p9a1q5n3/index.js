@@ -409,12 +409,12 @@ function handleCommand(username, message, isBroadcaster = false) {
     return;
   }
 
-  if (message === del || message.startsWith(del + " ")) {
+  if (message === done || message.startsWith(done + " ")) {
     handleDone(username, message.replace(done, "").trim());
     return;
   }
 
-  if (message.startsWith(del)) {
+  if (message === del || message.startsWith(del + " ")) {
     handleDelete(username, message.replace(del, "").trim());
     return;
   }
