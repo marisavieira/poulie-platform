@@ -659,18 +659,26 @@ function renderTasks() {
   });
 
   Object.entries(groupedUsers).forEach(([username, tasks]) => {
+    const userCompletedTasks = tasks.filter((task) => task.completed).length;
+    const userTotalTasks = tasks.length;
     const userBlock = document.createElement("div");
 
     userBlock.className = "chatTodo__user";
 
     userBlock.innerHTML = `
-      <div
-        class="chatTodo__username
-          ${state.userStyles[username]?.glow ? "is-glowy" : ""}
-        "
-        style="${getUsernameStyle(username)}"
-      >
-        ${username}
+      <div class="chatTodo__userHeader">
+        <div
+          class="chatTodo__username
+            ${state.userStyles[username]?.glow ? "is-glowy" : ""}
+          "
+          style="${getUsernameStyle(username)}"
+        >
+          ${username}
+        </div>
+
+        <div class="chatTodo__userProgress">
+          ${userCompletedTasks}/${userTotalTasks} completed
+        </div>
       </div>
 
       <div class="chatTodo__tasks">

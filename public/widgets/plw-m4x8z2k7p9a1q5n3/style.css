@@ -195,3 +195,21 @@ body {
 .chatTodo__task.is-completed .chatTodo__checkbox {
   transform: scale(1.05);
 }
+
+.chatTodo__userHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.chatTodo__username {
+  margin-bottom: 0;
+}
+
+.chatTodo__userProgress {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
