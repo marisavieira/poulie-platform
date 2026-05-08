@@ -6,7 +6,9 @@ const config = {
     done: "!done",
     delete: "!del",
     focus: "!focus",
-    check: "!check"
+    check: "!check",
+    clear: "!clear",
+    remove: "!remove"
   },
   rewards: {
     nameGlow: "Nome glowy",
@@ -132,6 +134,12 @@ function applyFieldData(fieldData) {
 
   widgetConfig.commands.check =
     getFieldValue(fieldData, "checkCommand", widgetConfig.commands.check);
+
+  widgetConfig.commands.clear =
+    getFieldValue(fieldData, "clearCommand", widgetConfig.commands.clear);
+  
+  widgetConfig.commands.remove =
+    getFieldValue(fieldData, "removeCommand", widgetConfig.commands.remove);
 
   widgetConfig.rewards = {
     ...widgetConfig.rewards,
@@ -589,6 +597,8 @@ function handleCommand(username, message, isBroadcaster = false, event = {}) {
     delete: del,
     focus,
     check,
+    clear,
+    remove,
   } = widgetConfig.commands;
 
   if (message === add || message.startsWith(add + " ")) {
@@ -612,10 +622,67 @@ function handleCommand(username, message, isBroadcaster = false, event = {}) {
     handleFocus(username, message.replace(focus, "").trim(), isBroadcaster);
   }
 
+  if (message === clear) {
+    handleClear(username, event, isBroadcaster);
+    return;
+  }
+
+  if (message === remove || message.startsWith(remove + " ")) {
+    handleRemoveUserTasks(
+      username,
+      message.replace(remove, "").trim(),
+      event,
+      isBroadcaster
+    );
+    return;
+  }
+
   if (message === check) {
     handleCheck(username);
     return;
   }
+}
+
+function canClearTasks(event = {}, isBroadcaster = false) {
+  const roles = getUserRoles(event, isBroadcaster);
+
+  return roles.broadcaster || roles.moderator;
+}
+
+function handleClear(username, event = {}, isBroadcaster = false) {
+  if (!canClearTasks(event, isBroadcaster)) {
+    console.log("[chat-todo] usuário sem permissão para limpar tasks:", username);
+    return;
+  }
+
+  state.tasks = [];
+  state.focusedTask = null;
+
+  renderTasks();
+}
+
+function handleRemoveUserTasks(username, targetUsername = "", event = {}, isBroadcaster = false) {
+  if (!canClearTasks(event, isBroadcaster)) {
+    console.log("[chat-todo] usuário sem permissão para remover tasks:", username);
+    return;
+  }
+
+  const normalizedTarget = normalizeUsername(targetUsername);
+
+  if (!normalizedTarget) return;
+
+  state.tasks = state.tasks.filter((task) => {
+    return normalizeUsername(task.username) !== normalizedTarget;
+  });
+
+  if (
+    state.focusedTask &&
+    normalizeUsername(state.focusedTask.username) === normalizedTarget
+  ) {
+    state.focusedTask = null;
+  }
+
+  renderTasks();
 }
 
 function handleAdd(username, content) {
