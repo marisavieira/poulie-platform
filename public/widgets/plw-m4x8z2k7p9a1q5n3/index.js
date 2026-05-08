@@ -251,6 +251,28 @@ function handleNameGlowRedemption(username) {
   renderTasks();
 }
 
+function normalizeText(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
+}
+
+function getRedemptionRewardTitle(data) {
+  return (
+    data.rewardTitle ||
+    data.reward?.title ||
+    data.reward?.name ||
+    data.reward ||
+    data.title ||
+    data.name ||
+    data.itemName ||
+    data.redemption?.reward?.title ||
+    data.redemption?.reward?.name ||
+    data.redemption?.reward ||
+    ""
+  );
+}
+
 function handleRedemption(event) {
   const data = event?.data || event;
 
@@ -259,18 +281,17 @@ function handleRedemption(event) {
     data.nick ||
     data.username ||
     data.name ||
+    data.redemption?.user?.displayName ||
+    data.redemption?.user?.login ||
     "unknown";
 
-  const rewardTitle =
-    data.rewardTitle ||
-    data.reward?.title ||
-    data.title ||
-    data.redemption?.reward?.title ||
-    "";
+  const rewardTitle = getRedemptionRewardTitle(data);
 
-  console.log("[chat-todo] redemption:", {
+  console.log("[chat-todo] redemption recebido:", {
     username,
     rewardTitle,
+    rewardsConfigurados: widgetConfig.rewards,
+    palette: widgetConfig.namePalette,
     data,
   });
 
@@ -301,16 +322,20 @@ function handleRedemption(event) {
     },
   ];
 
-  const matchedColorReward = colorRewards.find(
-    (item) => item.reward === rewardTitle
-  );
+  const matchedColorReward = colorRewards.find((item) => {
+    return normalizeText(item.reward) === normalizeText(rewardTitle);
+  });
 
   if (matchedColorReward) {
+    console.log("[chat-todo] cor aplicada:", matchedColorReward.color);
     handleNameColorRedemption(username, matchedColorReward.color);
     return;
   }
 
-  if (rewardTitle === widgetConfig.rewards.nameGlow) {
+  if (
+    normalizeText(rewardTitle) ===
+    normalizeText(widgetConfig.rewards.nameGlow)
+  ) {
     handleNameGlowRedemption(username);
   }
 }
