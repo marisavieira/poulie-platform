@@ -409,7 +409,7 @@ function handleCommand(username, message, isBroadcaster = false) {
     return;
   }
 
-  if (message === done || message.startsWith(done + " ")) {
+  if (message.startsWith(done)) {
     handleDone(username, message.replace(done, "").trim());
     return;
   }
