@@ -590,6 +590,24 @@ function canUserAddTask(username, event = {}, isBroadcaster = false) {
   return false;
 }
 
+function normalizeCommandText(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function commandMatches(message, command) {
+  const normalizedMessage = normalizeCommandText(message);
+  const normalizedCommand = normalizeCommandText(command);
+
+  return (
+    normalizedMessage === normalizedCommand ||
+    normalizedMessage.startsWith(normalizedCommand + " ")
+  );
+}
+
+function removeCommandFromMessage(message, command) {
+  return message.slice(command.length).trim();
+}
+
 function handleCommand(username, message, isBroadcaster = false, event = {}) {
   const {
     add,
@@ -601,43 +619,48 @@ function handleCommand(username, message, isBroadcaster = false, event = {}) {
     remove,
   } = widgetConfig.commands;
 
-  if (message === add || message.startsWith(add + " ")) {
+  if (commandMatches(message, add)) {
     if (!canUserAddTask(username, event, isBroadcaster)) return;
 
-    handleAdd(username, message.replace(add, "").trim());
+    handleAdd(username, removeCommandFromMessage(message, add));
     return;
   }
 
-  if (message.startsWith(done)) {
-    handleDone(username, message.replace(done, "").trim());
+  if (commandMatches(message, done)) {
+    handleDone(username, removeCommandFromMessage(message, done));
     return;
   }
 
-  if (message === del || message.startsWith(del + " ")) {
-    handleDelete(username, message.replace(del, "").trim());
+  if (commandMatches(message, del)) {
+    handleDelete(username, removeCommandFromMessage(message, del));
     return;
   }
 
-  if (message === focus || message.startsWith(focus + " ")) {
-    handleFocus(username, message.replace(focus, "").trim(), isBroadcaster);
+  if (commandMatches(message, focus)) {
+    handleFocus(
+      username,
+      removeCommandFromMessage(message, focus),
+      isBroadcaster
+    );
+    return;
   }
 
-  if (message === clear) {
+  if (normalizeCommandText(message) === normalizeCommandText(clear)) {
     handleClear(username, event, isBroadcaster);
     return;
   }
 
-  if (message === remove || message.startsWith(remove + " ")) {
+  if (commandMatches(message, remove)) {
     handleRemoveUserTasks(
       username,
-      message.replace(remove, "").trim(),
+      removeCommandFromMessage(message, remove),
       event,
       isBroadcaster
     );
     return;
   }
 
-  if (message === check) {
+  if (normalizeCommandText(message) === normalizeCommandText(check)) {
     handleCheck(username);
     return;
   }
