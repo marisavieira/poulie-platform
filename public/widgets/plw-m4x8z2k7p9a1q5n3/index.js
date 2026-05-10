@@ -47,6 +47,7 @@ const state = {
 
 let widgetConfig = structuredClone(config);
 let commandSliderIntervalId = null;
+let loopScrollStartedAt = Date.now();
 
 export function init(options = {}) {
   console.log("[chat-todo] iniciado");
@@ -1018,6 +1019,18 @@ function setupLoopScroll() {
 
   if (!viewport || !track) return;
 
+  const wasLooping = track.classList.contains("is-looping");
+  const previousDuration =
+    parseFloat(track.style.getPropertyValue("--loop-duration")) || 12;
+
+  let elapsedSeconds = 0;
+
+  if (wasLooping) {
+    elapsedSeconds = (Date.now() - loopScrollStartedAt) / 1000;
+  } else {
+    loopScrollStartedAt = Date.now();
+  }
+
   track.classList.remove("is-looping");
 
   const originalItems = Array.from(track.children).filter(
@@ -1040,6 +1053,14 @@ function setupLoopScroll() {
 
   const duration = Math.max(12, originalItems.length * 5);
 
+  const preservedTime = wasLooping
+    ? elapsedSeconds % duration
+    : 0;
+
   track.style.setProperty("--loop-duration", `${duration}s`);
-  track.classList.add("is-looping");
+  track.style.setProperty("--loop-delay", `-${preservedTime}s`);
+
+  requestAnimationFrame(() => {
+    track.classList.add("is-looping");
+  });
 }
