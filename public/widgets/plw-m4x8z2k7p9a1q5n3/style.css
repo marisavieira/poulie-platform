@@ -134,7 +134,7 @@ body {
 }
 
 .chatTodo__listTrack.is-looping {
-  animation: loopScroll var(--loop-duration) linear infinite;
+  animation: chatTodoLoop var(--loop-duration) linear infinite;
   animation-delay: var(--loop-delay, 0s);
 }
 
