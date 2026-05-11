@@ -74,50 +74,67 @@ function getFieldValue(fieldData, key, fallback) {
   return field ?? fallback;
 }
 
+function hexToRgba(hex, opacity = 1) {
+  const cleanHex = String(hex || "").replace("#", "");
+
+  if (cleanHex.length !== 6) return hex;
+
+  const r = parseInt(cleanHex.substring(0, 2), 16);
+  const g = parseInt(cleanHex.substring(2, 4), 16);
+  const b = parseInt(cleanHex.substring(4, 6), 16);
+
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
+
+function escapeHTML(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function applyTheme(fieldData = {}) {
   const root = document.documentElement;
 
-  root.style.setProperty(
-    "--widget-width",
-    getFieldValue(fieldData, "widgetWidth", "420px")
+  const backgroundColor = getFieldValue(fieldData, "backgroundColor", "#1f1f1f");
+  const backgroundOpacity = Number(
+    getFieldValue(fieldData, "backgroundOpacity", 1)
   );
 
-  root.style.setProperty(
-    "--card",
-    getFieldValue(fieldData, "backgroundColor", "#1f1f1f")
-  );
+  root.style.setProperty("--widget-width", getFieldValue(fieldData, "widgetWidth", "420px"));
+  root.style.setProperty("--radius", getFieldValue(fieldData, "borderRadius", "16px"));
 
-  root.style.setProperty(
-    "--text",
-    getFieldValue(fieldData, "textColor", "#ffffff")
-  );
+  root.style.setProperty("--card", hexToRgba(backgroundColor, backgroundOpacity));
+  root.style.setProperty("--focus-card-bg", hexToRgba(
+    getFieldValue(fieldData, "focusBackgroundColor", backgroundColor),
+    backgroundOpacity
+  ));
 
-  root.style.setProperty(
-    "--muted",
-    getFieldValue(fieldData, "mutedColor", "#9f9f9f")
-  );
+  root.style.setProperty("--text", getFieldValue(fieldData, "textColor", "#ffffff"));
+  root.style.setProperty("--muted", getFieldValue(fieldData, "mutedColor", "#9f9f9f"));
+  root.style.setProperty("--accent", getFieldValue(fieldData, "accentColor", "#ffd166"));
+  root.style.setProperty("--focus", getFieldValue(fieldData, "focusColor", "#8ecae6"));
 
-  root.style.setProperty(
-    "--accent",
-    getFieldValue(fieldData, "accentColor", "#ffd166")
-  );
+  root.style.setProperty("--focus-label-color", getFieldValue(fieldData, "focusLabelColor", "#9f9f9f"));
+  root.style.setProperty("--focus-task-color", getFieldValue(fieldData, "focusTaskColor", "#ffffff"));
+  root.style.setProperty("--command-color", getFieldValue(fieldData, "commandColor", "#ffd166"));
+  root.style.setProperty("--progress-color", getFieldValue(fieldData, "progressColor", "#9f9f9f"));
+  root.style.setProperty("--user-progress-color", getFieldValue(fieldData, "userProgressColor", "#9f9f9f"));
+  root.style.setProperty("--task-id-color", getFieldValue(fieldData, "taskIdColor", "#9f9f9f"));
+  root.style.setProperty("--checkbox-border-color", getFieldValue(fieldData, "checkboxBorderColor", "#9f9f9f"));
+  root.style.setProperty("--checkbox-bg-color", getFieldValue(fieldData, "checkboxBgColor", "#ffd166"));
+  root.style.setProperty("--checkbox-check-color", getFieldValue(fieldData, "checkboxCheckColor", "#111111"));
+  root.style.setProperty("--added-burst-color", getFieldValue(fieldData, "addedBurstColor", "#ffd166"));
 
-  root.style.setProperty(
-    "--focus",
-    getFieldValue(fieldData, "focusColor", "#8ecae6")
-  );
-
-  root.style.setProperty(
-    "--radius",
-    getFieldValue(fieldData, "borderRadius", "16px")
-  );
-
-  console.log("[chat-todo] cores aplicadas:", {
-    card: getComputedStyle(root).getPropertyValue("--card"),
-    text: getComputedStyle(root).getPropertyValue("--text"),
-    accent: getComputedStyle(root).getPropertyValue("--accent"),
-    focus: getComputedStyle(root).getPropertyValue("--focus"),
-  });
+  root.style.setProperty("--font-main", getFieldValue(fieldData, "mainFont", "sans-serif"));
+  root.style.setProperty("--font-focus-label", getFieldValue(fieldData, "focusLabelFont", "inherit"));
+  root.style.setProperty("--font-focus-task", getFieldValue(fieldData, "focusTaskFont", "inherit"));
+  root.style.setProperty("--font-command", getFieldValue(fieldData, "commandFont", "inherit"));
+  root.style.setProperty("--font-progress", getFieldValue(fieldData, "progressFont", "inherit"));
+  root.style.setProperty("--font-username", getFieldValue(fieldData, "usernameFont", "inherit"));
+  root.style.setProperty("--font-task", getFieldValue(fieldData, "taskFont", "inherit"));
 }
 
 function applyFieldData(fieldData) {
@@ -222,6 +239,34 @@ function applyFieldData(fieldData) {
     ),
   };
 
+  widgetConfig.texts = {
+    focusLabel: getFieldValue(
+      fieldData,
+      "focusLabelText",
+      "o que poulie está fazendo agora"
+    ),
+    emptyFocus: getFieldValue(
+      fieldData,
+      "emptyFocusText",
+      "não ta fazendo nada"
+    ),
+    completedLabel: getFieldValue(
+      fieldData,
+      "completedLabelText",
+      "completed"
+    ),
+    taskNamePlaceholder: getFieldValue(
+      fieldData,
+      "taskNamePlaceholderText",
+      "task name"
+    ),
+    taskNumberPlaceholder: getFieldValue(
+      fieldData,
+      "taskNumberPlaceholderText",
+      "task number"
+    ),
+  };
+
   widgetConfig.settings = {
     ...widgetConfig.settings,
     commandSliderEnabled:
@@ -233,7 +278,7 @@ function applyFieldData(fieldData) {
     showProgress:
       fieldData.showProgress ?? true,
     orderMode:
-      fieldData.orderMode || "groupByUserTodoDone",
+      getFieldValue(fieldData, "orderMode", "addedOrder"),
     maxTasksPerUser:
       Number(fieldData.maxTasksPerUser) || 10,
     maxTaskLength:
@@ -255,22 +300,16 @@ function createLayout() {
     <div class="chatTodo">
 
       <div class="chatTodo__focus">
-        <div class="chatTodo__focusLabel">
-          o que poulie está fazendo agora
-        </div>
-
-        <div class="chatTodo__focusTask" id="focusTask">
-          não ta fazendo nada
-        </div>
+        <div class="chatTodo__focusLabel" id="focusLabel"></div>
+        <div class="chatTodo__focusTask" id="focusTask"></div>
       </div>
 
       <div class="chatTodo__meta">
-        <div class="chatTodo__commandSlide" id="commandSlide">
-          !add tarefa
-        </div>
+        <div class="chatTodo__commandSlide" id="commandSlide"></div>
 
-        <div class="chatTodo__progress" id="progressText">
-          0/0 completadas
+        <div class="chatTodo__progressWrap">
+          <div class="chatTodo__progress" id="progressText"></div>
+          <div class="chatTodo__addedBurst" id="addedBurst"></div>
         </div>
       </div>
 
@@ -288,11 +327,13 @@ function startCommandSlider() {
     commandSliderIntervalId = null;
   }
 
+  const texts = widgetConfig.texts || {};
+
   const commands = [
-    `${widgetConfig.commands.add} task name`,
-    `${widgetConfig.commands.done} task number`,
-    `${widgetConfig.commands.delete} task number`,
-    `${widgetConfig.commands.focus} task number`,
+    `${widgetConfig.commands.add} ${texts.taskNamePlaceholder || "task name"}`,
+    `${widgetConfig.commands.done} ${texts.taskNumberPlaceholder || "task number"}`,
+    `${widgetConfig.commands.delete} ${texts.taskNumberPlaceholder || "task number"}`,
+    `${widgetConfig.commands.focus} ${texts.taskNumberPlaceholder || "task number"}`,
   ];
 
   const commandSlide = document.getElementById("commandSlide");
@@ -717,7 +758,9 @@ function handleAdd(username, content) {
     .map((task) => task.trim())
     .filter(Boolean);
 
-  splitTasks.forEach((taskText) => {
+  if (!splitTasks.length) return;
+
+  splitTasks.forEach((taskText, index) => {
     const userTasks = state.tasks.filter(
       (task) => task.username === username
     );
@@ -730,10 +773,25 @@ function handleAdd(username, content) {
       text: taskText,
       completed: false,
       focused: false,
+      createdAt: Date.now() + index,
     });
   });
 
   renderTasks();
+  showAddedTasksBurst(splitTasks.length);
+}
+
+function showAddedTasksBurst(amount) {
+  const addedBurst = document.getElementById("addedBurst");
+
+  if (!addedBurst || !amount) return;
+
+  addedBurst.textContent = `+${amount}`;
+  addedBurst.classList.remove("is-visible");
+
+  void addedBurst.offsetWidth;
+
+  addedBurst.classList.add("is-visible");
 }
 
 function handleDone(username, taskId) {
@@ -882,6 +940,28 @@ function getUsernameStyle(username) {
   `;
 }
 
+function getTasksByOrder(tasks) {
+  const orderMode = widgetConfig.settings?.orderMode || "addedOrder";
+
+  let orderedTasks = [...tasks];
+
+  if (orderMode === "pendingOnly") {
+    orderedTasks = orderedTasks.filter((task) => !task.completed);
+  }
+
+  if (orderMode === "todoDone") {
+    orderedTasks.sort((a, b) => {
+      if (a.completed === b.completed) {
+        return (a.createdAt || 0) - (b.createdAt || 0);
+      }
+
+      return a.completed ? 1 : -1;
+    });
+  }
+
+  return orderedTasks;
+}
+
 function renderTasks() {
   const taskList = document.getElementById("taskList");
 
@@ -890,16 +970,21 @@ function renderTasks() {
   ).length;
 
   const totalTasks = state.tasks.length;
+  const texts = widgetConfig.texts || {};
 
-  document.getElementById(
-    "progressText"
-  ).textContent = `${completedTasks}/${totalTasks} completed`;
+  document.getElementById("focusLabel").textContent =
+    texts.focusLabel || "o que poulie está fazendo agora";
 
-  if (state.focusedTask) {
-    document.getElementById(
-      "focusTask"
-    ).textContent = `${state.focusedTask.text}`;
-  }
+  document.getElementById("focusTask").textContent =
+    state.focusedTask?.text || texts.emptyFocus || "não ta fazendo nada";
+
+  const progressText = document.getElementById("progressText");
+
+  progressText.textContent =
+    `${completedTasks}/${totalTasks} ${texts.completedLabel || "completed"}`;
+
+  progressText.style.display =
+    widgetConfig.settings?.showProgress ? "block" : "none";
 
   taskList.innerHTML = "";
 
@@ -928,7 +1013,7 @@ function renderTasks() {
           "
           style="${getUsernameStyle(username)}"
         >
-          ${username}
+          ${escapeHTML(username)}
         </div>
 
         <div class="chatTodo__userProgress">
@@ -937,7 +1022,7 @@ function renderTasks() {
       </div>
 
       <div class="chatTodo__tasks">
-        ${tasks
+        ${getTasksByOrder(tasks)
           .map((task) => {
             return `
               <div class="
@@ -974,7 +1059,7 @@ function renderTasks() {
                 </div>
 
                 <span class="taskText chatTodo__taskText">
-                  ${task.text}
+                  ${escapeHTML(task.text)}
                 </span>
               </div>
             `;

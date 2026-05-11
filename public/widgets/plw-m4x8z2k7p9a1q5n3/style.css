@@ -1,16 +1,40 @@
 :root {
   --bg: #151515;
   --card: #1f1f1f;
+  --focus-card-bg: #1f1f1f;
+
   --text: #ffffff;
   --muted: #9f9f9f;
   --accent: #ffd166;
   --focus: #8ecae6;
   --done: #777777;
+
+  --focus-label-color: #9f9f9f;
+  --focus-task-color: #ffffff;
+  --command-color: #ffd166;
+  --progress-color: #9f9f9f;
+  --user-progress-color: #9f9f9f;
+  --task-id-color: #9f9f9f;
+  --checkbox-border-color: #9f9f9f;
+  --checkbox-bg-color: #ffd166;
+  --checkbox-check-color: #111111;
+  --added-burst-color: #ffd166;
+
+  --font-main: sans-serif;
+  --font-focus-label: inherit;
+  --font-focus-task: inherit;
+  --font-command: inherit;
+  --font-progress: inherit;
+  --font-username: inherit;
+  --font-task: inherit;
+
+  --widget-width: 420px;
+  --radius: 16px;
 }
 
 body {
   margin: 0;
-  font-family: sans-serif;
+  font-family: var(--font-main, sans-serif);
   color: var(--text);
 }
 
@@ -22,7 +46,7 @@ body {
 }
 
 .chatTodo__focus {
-  background: var(--card);
+  background: var(--focus-card-bg, var(--card));
   padding: 16px;
   border-radius: var(--radius, 16px);
 }
@@ -30,68 +54,15 @@ body {
 .chatTodo__focusLabel {
   font-size: 12px;
   margin-bottom: 8px;
+  color: var(--focus-label-color);
+  font-family: var(--font-focus-label);
 }
 
 .chatTodo__focusTask {
   font-size: 20px;
   font-weight: bold;
-}
-
-.chatTodo__progress {
-  font-size: 14px;
-  color: var(--muted);
-}
-
-.chatTodo__list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.chatTodo__user {
-  background: var(--card);
-  border-radius: var(--radius, 16px);
-  padding: 16px;
-}
-
-.chatTodo__username {
-  font-weight: bold;
-  margin-bottom: 12px;
-}
-
-.chatTodo__tasks {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.chatTodo__task {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.chatTodo__taskCheck {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  padding-top: 1px;
-}
-
-.chatTodo__taskText {
-  line-height: 1.4;
-  word-break: break-word;
-}
-
-.chatTodo__task.is-focused {
-  color: var(--focus);
-  font-weight: bold;
-}
-
-.chatTodo__task.is-completed {
-  opacity: 0.5;
-  text-decoration: line-through;
+  color: var(--focus-task-color);
+  font-family: var(--font-focus-task);
 }
 
 .chatTodo__meta {
@@ -103,7 +74,8 @@ body {
 
 .chatTodo__commandSlide {
   font-size: 14px;
-  color: var(--accent);
+  color: var(--command-color);
+  font-family: var(--font-command);
   opacity: 1;
   transition: opacity 0.25s ease, transform 0.25s ease;
   white-space: nowrap;
@@ -114,11 +86,33 @@ body {
   transform: translateY(4px);
 }
 
+.chatTodo__progressWrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: fit-content;
+}
+
 .chatTodo__progress {
   font-size: 14px;
-  color: var(--muted);
+  color: var(--progress-color);
+  font-family: var(--font-progress);
   white-space: nowrap;
   text-align: right;
+}
+
+.chatTodo__addedBurst {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--added-burst-color);
+  opacity: 0;
+  transform: translateY(4px) scale(0.8);
+  pointer-events: none;
+}
+
+.chatTodo__addedBurst.is-visible {
+  animation: addedBurstPop 1s ease forwards;
 }
 
 .chatTodo__listViewport {
@@ -142,32 +136,83 @@ body {
   animation-play-state: paused;
 }
 
+.chatTodo__user {
+  background: var(--card);
+  border-radius: var(--radius, 16px);
+  padding: 16px;
+}
+
 .chatTodo__user.is-clone {
   pointer-events: none;
 }
 
-@keyframes chatTodoLoop {
-  from {
-    transform: translateY(0);
-  }
+.chatTodo__userHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
 
-  to {
-    transform: translateY(-50%);
-  }
+.chatTodo__username {
+  font-weight: bold;
+  margin-bottom: 0;
+  font-family: var(--font-username);
+}
+
+.chatTodo__userProgress {
+  font-size: 13px;
+  color: var(--user-progress-color);
+  white-space: nowrap;
+  font-family: var(--font-progress);
+}
+
+.chatTodo__tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chatTodo__task {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.chatTodo__task.is-focused {
+  color: var(--focus);
+  font-weight: bold;
+}
+
+.chatTodo__task.is-completed {
+  opacity: 0.5;
+  text-decoration: line-through;
 }
 
 .chatTodo__taskCheck {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
   min-width: fit-content;
+  padding-top: 1px;
+}
+
+.taskId {
+  color: var(--task-id-color);
+}
+
+.chatTodo__taskText {
+  line-height: 1.4;
+  word-break: break-word;
+  font-family: var(--font-task);
 }
 
 .chatTodo__checkbox {
   width: 18px;
   height: 18px;
   border-radius: 6px;
-  border: 2px solid var(--muted);
+  border: 2px solid var(--checkbox-border-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -184,9 +229,9 @@ body {
 }
 
 .chatTodo__checkbox.is-checked {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #111;
+  background: var(--checkbox-bg-color);
+  border-color: var(--checkbox-bg-color);
+  color: var(--checkbox-check-color);
 }
 
 .chatTodo__task.is-completed .taskId {
@@ -197,20 +242,29 @@ body {
   transform: scale(1.05);
 }
 
-.chatTodo__userHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
+@keyframes chatTodoLoop {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(-50%);
+  }
 }
 
-.chatTodo__username {
-  margin-bottom: 0;
-}
+@keyframes addedBurstPop {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.8);
+  }
 
-.chatTodo__userProgress {
-  font-size: 13px;
-  color: var(--muted);
-  white-space: nowrap;
+  25% {
+    opacity: 1;
+    transform: translateY(0) scale(1.1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-10px) scale(1);
+  }
 }
