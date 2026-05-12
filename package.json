@@ -1,5 +1,13 @@
 {
   "name": "poulie-platform",
   "version": "1.0.0",
-  "private": true
+  "private": true,
+
+  "devDependencies": {
+    "javascript-obfuscator": "^5.4.2",
+    "terser": "^5.47.1"
+  },
+  "scripts": {
+    "build:loader": "npx terser public/assets/loader.source.js -o public/assets/loader.min.js -c -m && npx javascript-obfuscator public/assets/loader.min.js --output public/assets/loader.js --compact true --identifier-names-generator hexadecimal --string-array true --string-array-threshold 0.5 --self-defending false --control-flow-flattening false && del public\\assets\\loader.min.js"
+  }
 }
