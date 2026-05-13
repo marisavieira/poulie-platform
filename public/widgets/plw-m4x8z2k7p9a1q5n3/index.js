@@ -43,6 +43,7 @@ const state = {
   tasks: [],
   focusedTask: null,
   userStyles: {},
+  nextTaskIds: {},
 };
 
 let widgetConfig = structuredClone(config);
@@ -722,6 +723,7 @@ function handleClear(username, event = {}, isBroadcaster = false) {
 
   state.tasks = [];
   state.focusedTask = null;
+  state.nextTaskIds = {};
 
   renderTasks();
 }
@@ -750,6 +752,29 @@ function handleRemoveUserTasks(username, targetUsername = "", event = {}, isBroa
   renderTasks();
 }
 
+function getNextTaskId(username) {
+  const normalizedUsername = normalizeUsername(username);
+
+  if (!state.nextTaskIds[normalizedUsername]) {
+    const userTaskIds = state.tasks
+      .filter((task) => normalizeUsername(task.username) === normalizedUsername)
+      .map((task) => Number(task.id))
+      .filter(Number.isFinite);
+
+    const highestExistingId = userTaskIds.length
+      ? Math.max(...userTaskIds)
+      : 0;
+
+    state.nextTaskIds[normalizedUsername] = highestExistingId + 1;
+  }
+
+  const nextId = state.nextTaskIds[normalizedUsername];
+
+  state.nextTaskIds[normalizedUsername] += 1;
+
+  return nextId;
+}
+
 function handleAdd(username, content) {
   if (!content) return;
 
@@ -761,11 +786,7 @@ function handleAdd(username, content) {
   if (!splitTasks.length) return;
 
   splitTasks.forEach((taskText, index) => {
-    const userTasks = state.tasks.filter(
-      (task) => task.username === username
-    );
-
-    const nextId = userTasks.length + 1;
+    const nextId = getNextTaskId(username);
 
     state.tasks.push({
       id: nextId,

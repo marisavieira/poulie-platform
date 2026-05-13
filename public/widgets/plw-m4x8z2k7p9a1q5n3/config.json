@@ -1,7 +1,7 @@
 {
   "id": "plw-m4x8z2k7p9a1q5n3",
   "name": "chat-todo",
-  "title": "Chat To Do",
+  "title": "Chat to do",
 
   "addCommand": "!add",
   "deleteCommand": "!del",
