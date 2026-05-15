@@ -274,8 +274,6 @@ function applyFieldData(fieldData) {
       fieldData.commandSliderEnabled ?? true,
     commandSliderInterval:
       Number(fieldData.commandSliderInterval) || 3500,
-    showCompletedTasks:
-      fieldData.showCompletedTasks ?? true,
     showProgress:
       fieldData.showProgress ?? true,
     orderMode:
@@ -357,25 +355,28 @@ function startCommandSlider() {
 }
 
 function handleNameColorRedemption(username, colorValue) {
+  const normalizedUsername = normalizeUsername(username);
   const color = String(colorValue || "").trim();
 
   if (!color.startsWith("#")) return;
 
-  if (!state.userStyles[username]) {
-    state.userStyles[username] = {};
+  if (!state.userStyles[normalizedUsername]) {
+    state.userStyles[normalizedUsername] = {};
   }
 
-  state.userStyles[username].color = color;
+  state.userStyles[normalizedUsername].color = color;
 
   renderTasks();
 }
 
 function handleNameGlowRedemption(username) {
-  if (!state.userStyles[username]) {
-    state.userStyles[username] = {};
+  const normalizedUsername = normalizeUsername(username);
+
+  if (!state.userStyles[normalizedUsername]) {
+    state.userStyles[normalizedUsername] = {};
   }
 
-  state.userStyles[username].glow = true;
+  state.userStyles[normalizedUsername].glow = true;
 
   renderTasks();
 }
@@ -665,7 +666,7 @@ function handleCommand(username, message, isBroadcaster = false, event = {}) {
   if (commandMatches(message, add)) {
     if (!canUserAddTask(username, event, isBroadcaster)) return;
 
-    handleAdd(username, removeCommandFromMessage(message, add));
+    handleAdd(username, removeCommandFromMessage(message, add), isBroadcaster);
     return;
   }
 
@@ -775,7 +776,7 @@ function getNextTaskId(username) {
   return nextId;
 }
 
-function handleAdd(username, content) {
+function handleAdd(username, content, isBroadcaster = false) {
   if (!content) return;
 
   const splitTasks = content
@@ -794,6 +795,7 @@ function handleAdd(username, content) {
       text: taskText,
       completed: false,
       focused: false,
+      isStreamer: isBroadcaster || isStreamer(username),
       createdAt: Date.now() + index,
     });
   });
@@ -931,15 +933,14 @@ function handleCheck(username) {
   );
 }
 
-function getUsernameStyle(username) {
-  const custom = state.userStyles[username] || {};
-
-  const isBroadcaster = isStreamer(username);
+function getUsernameStyle(username, isStreamerUser = false) {
+  const normalizedUsername = normalizeUsername(username);
+  const custom = state.userStyles[normalizedUsername] || {};
 
   const color =
     custom.color ||
     (
-      isBroadcaster
+      isStreamerUser
         ? widgetConfig.settings.defaultStreamerNameColor
         : widgetConfig.settings.defaultViewerNameColor
     );
@@ -1022,7 +1023,8 @@ function renderTasks() {
   Object.entries(groupedUsers).forEach(([username, tasks]) => {
     const userCompletedTasks = tasks.filter((task) => task.completed).length;
     const userTotalTasks = tasks.length;
-    const userBlock = document.createElement("div");
+    const userBlock = document.createElement("div");    
+    const isStreamerUser = tasks.some((task) => task.isStreamer) || isStreamer(username);
 
     userBlock.className = "chatTodo__user";
 
@@ -1030,9 +1032,9 @@ function renderTasks() {
       <div class="chatTodo__userHeader">
         <div
           class="chatTodo__username
-            ${state.userStyles[username]?.glow ? "is-glowy" : ""}
+            ${state.userStyles[normalizeUsername(username)]?.glow ? "is-glowy" : ""}
           "
-          style="${getUsernameStyle(username)}"
+          style="${getUsernameStyle(username, isStreamerUser)}"
         >
           ${escapeHTML(username)}
         </div>
