@@ -82,6 +82,16 @@ function getFieldValue(fieldData, key, fallback) {
   return field ?? fallback;
 }
 
+function getFontValue(fieldData, key, fallback) {
+  const value = getFieldValue(fieldData, key, fallback);
+
+  if (typeof value === "object" && value !== null) {
+    return value.family || value.name || value.value || fallback;
+  }
+
+  return value || fallback;
+}
+
 function hexToRgba(hex, opacity = 1) {
   const cleanHex = String(hex || "").replace("#", "");
 
@@ -136,13 +146,13 @@ function applyTheme(fieldData = {}) {
   root.style.setProperty("--checkbox-check-color", getFieldValue(fieldData, "checkboxCheckColor", "#111111"));
   root.style.setProperty("--added-burst-color", getFieldValue(fieldData, "addedBurstColor", "#ffd166"));
 
-  root.style.setProperty("--font-main", getFieldValue(fieldData, "mainFont", "sans-serif"));
-  root.style.setProperty("--font-focus-label", getFieldValue(fieldData, "focusLabelFont", "inherit"));
-  root.style.setProperty("--font-focus-task", getFieldValue(fieldData, "focusTaskFont", "inherit"));
-  root.style.setProperty("--font-command", getFieldValue(fieldData, "commandFont", "inherit"));
-  root.style.setProperty("--font-progress", getFieldValue(fieldData, "progressFont", "inherit"));
-  root.style.setProperty("--font-username", getFieldValue(fieldData, "usernameFont", "inherit"));
-  root.style.setProperty("--font-task", getFieldValue(fieldData, "taskFont", "inherit"));
+  root.style.setProperty("--font-main", `"${getFontValue(fieldData, "mainFont", "Nunito")}", sans-serif`);
+  root.style.setProperty("--font-focus-label", `"${getFontValue(fieldData, "focusLabelFont", "Nunito")}", sans-serif`);
+  root.style.setProperty("--font-focus-task", `"${getFontValue(fieldData, "focusTaskFont", "Nunito")}", sans-serif`);
+  root.style.setProperty("--font-command", `"${getFontValue(fieldData, "commandFont", "Nunito")}", sans-serif`);
+  root.style.setProperty("--font-progress", `"${getFontValue(fieldData, "progressFont", "Nunito")}", sans-serif`);
+  root.style.setProperty("--font-username", `"${getFontValue(fieldData, "usernameFont", "Nunito")}", sans-serif`);
+  root.style.setProperty("--font-task", `"${getFontValue(fieldData, "taskFont", "Nunito")}", sans-serif`);
 }
 
 function applyFieldData(fieldData) {
