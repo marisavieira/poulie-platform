@@ -869,16 +869,15 @@ function renderTaskText(task) {
 
   if (!emotes.length) return escapeHTML(text);
 
-  let html = "";
-  let cursor = 0;
+  const words = text.split(/(\s+)/);
 
-  emotes
-    .slice()
-    .sort((a, b) => a.start - b.start)
-    .forEach((emote) => {
-      html += escapeHTML(text.slice(cursor, emote.start));
+  return words
+    .map((word) => {
+      const emote = emotes.find((item) => item.name === word);
 
-      html += `
+      if (!emote) return escapeHTML(word);
+
+      return `
         <img
           class="chatTodo__emote"
           src="${escapeHTML(emote.url)}"
@@ -886,13 +885,8 @@ function renderTaskText(task) {
           title="${escapeHTML(emote.name)}"
         />
       `;
-
-      cursor = emote.end + 1;
-    });
-
-  html += escapeHTML(text.slice(cursor));
-
-  return html;
+    })
+    .join("");
 }
 
 function handleAdd(username, fullMessage, command, isBroadcaster = false, event = {}) {
