@@ -61,6 +61,7 @@ export function init(options = {}) {
 
   createLayout();
   applyFieldData(options.fieldData || {});
+  renderTasks();
 
   if (widgetConfig.settings.commandSliderEnabled) {
     startCommandSlider();
