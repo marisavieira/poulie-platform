@@ -31,6 +31,7 @@ const config = {
     taskDone: "task completed:",
     taskDeleted: "task deleted:",
     taskNotFound: "task not found",
+    taskFocused: "focused task:",
   },
   permissions: {
     allowEveryoneToAddTasks: true,
@@ -224,6 +225,11 @@ function applyFieldData(fieldData) {
       fieldData,
       "taskNotFoundMessage",
       widgetConfig.chatMessages.taskNotFound
+    ),
+    taskFocused: getFieldValue(
+      fieldData,
+      "taskFocusedMessage",
+      widgetConfig.chatMessages.taskFocused
     ),
   };
 
@@ -924,18 +930,23 @@ function isStreamer(username) {
 
 function handleFocus(username, taskId, isBroadcaster = false) {
   state.tasks.forEach((task) => {
-    if (task.username === username) {
+    if (
+      normalizeUsername(task.username) === normalizeUsername(username)
+    ) {
       task.focused = false;
     }
   });
 
   const task = state.tasks.find(
     (task) =>
-      task.username === username &&
+      normalizeUsername(task.username) === normalizeUsername(username) &&
       task.id === Number(taskId)
   );
 
-  if (!task) return;
+  if (!task) {
+    sendChatMessage(`@${username}, ${widgetConfig.chatMessages.taskNotFound}`);
+    return;
+  }
 
   task.focused = true;
 
@@ -944,6 +955,10 @@ function handleFocus(username, taskId, isBroadcaster = false) {
   }
 
   renderTasks();
+
+  sendChatMessage(
+    `@${username}, ${widgetConfig.chatMessages.taskFocused} ${task.id}. ${task.text}`
+  );
 }
 
 async function sendChatMessage(message) {
