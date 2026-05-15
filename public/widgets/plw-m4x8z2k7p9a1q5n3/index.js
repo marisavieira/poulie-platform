@@ -1177,7 +1177,7 @@ function renderTasks() {
   if (state.focusedTask) {
     focusTask.innerHTML = renderTaskText(state.focusedTask);
   } else {
-    focusTask.textContent = texts.emptyFocus || "não ta fazendo nada";
+    focusTask.textContent = texts.emptyFocus || "focus task number";
   }
 
   const progressText = document.getElementById("progressText");
