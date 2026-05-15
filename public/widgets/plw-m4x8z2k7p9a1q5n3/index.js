@@ -702,7 +702,7 @@ function handleCommand(username, message, isBroadcaster = false, event = {}) {
   if (commandMatches(message, add)) {
     if (!canUserAddTask(username, event, isBroadcaster)) return;
 
-    handleAdd(username, removeCommandFromMessage(message, add), isBroadcaster);
+    handleAdd(username, message, add, isBroadcaster, event);
     return;
   }
 
@@ -812,8 +812,89 @@ function getNextTaskId(username) {
   return nextId;
 }
 
-function handleAdd(username, content, isBroadcaster = false) {
+function getTwitchEmoteUrl(id) {
+  return `https://static-cdn.jtvnw.net/emoticons/v2/${id}/default/dark/1.0`;
+}
+
+function getTaskEmotesFromEvent(event = {}, fullMessage = "", command = "") {
+  const emotesTag =
+    event.tags?.emotes ||
+    event.emotes ||
+    "";
+
+  if (!emotesTag || typeof emotesTag !== "string") return [];
+
+  const commandOffset = command.length;
+  const emotes = [];
+
+  emotesTag.split("/").forEach((emoteData) => {
+    const [id, positions] = emoteData.split(":");
+
+    if (!id || !positions) return;
+
+    positions.split(",").forEach((position) => {
+      const [start, end] = position.split("-").map(Number);
+
+      if (!Number.isFinite(start) || !Number.isFinite(end)) return;
+
+      const adjustedStart = start - commandOffset;
+      const adjustedEnd = end - commandOffset;
+
+      if (adjustedStart < 0) return;
+
+      const name = fullMessage.slice(start, end + 1);
+
+      emotes.push({
+        id,
+        name,
+        start: adjustedStart,
+        end: adjustedEnd,
+        url: getTwitchEmoteUrl(id),
+      });
+    });
+  });
+
+  return emotes;
+}
+
+function renderTaskText(task) {
+  const text = String(task.text || "");
+  const emotes = Array.isArray(task.emotes) ? task.emotes : [];
+
+  if (!emotes.length) return escapeHTML(text);
+
+  let html = "";
+  let cursor = 0;
+
+  emotes
+    .slice()
+    .sort((a, b) => a.start - b.start)
+    .forEach((emote) => {
+      html += escapeHTML(text.slice(cursor, emote.start));
+
+      html += `
+        <img
+          class="chatTodo__emote"
+          src="${escapeHTML(emote.url)}"
+          alt="${escapeHTML(emote.name)}"
+          title="${escapeHTML(emote.name)}"
+        />
+      `;
+
+      cursor = emote.end + 1;
+    });
+
+  html += escapeHTML(text.slice(cursor));
+
+  return html;
+}
+
+function handleAdd(username, fullMessage, command, isBroadcaster = false, event = {}) {
+  const content = removeCommandFromMessage(fullMessage, command);
+
   if (!content) return;
+
+  const allEmotes = getTaskEmotesFromEvent(event, fullMessage, command);
 
   const splitTasks = content
     .split(/[,;]/)
@@ -823,14 +904,29 @@ function handleAdd(username, content, isBroadcaster = false) {
   if (!splitTasks.length) return;
 
   const addedTasks = [];
+  let searchStart = 0;
 
   splitTasks.forEach((taskText, index) => {
+    const taskStart = content.indexOf(taskText, searchStart);
+    const taskEnd = taskStart + taskText.length - 1;
+
+    searchStart = taskEnd + 1;
+
+    const taskEmotes = allEmotes
+      .filter((emote) => emote.start >= taskStart && emote.end <= taskEnd)
+      .map((emote) => ({
+        ...emote,
+        start: emote.start - taskStart,
+        end: emote.end - taskStart,
+      }));
+
     const nextId = getNextTaskId(username);
 
     const newTask = {
       id: nextId,
       username,
       text: taskText,
+      emotes: taskEmotes,
       completed: false,
       focused: false,
       isStreamer: isBroadcaster || isStreamer(username),
@@ -1165,7 +1261,7 @@ function renderTasks() {
                 </div>
 
                 <span class="taskText chatTodo__taskText">
-                  ${escapeHTML(task.text)}
+                  ${renderTaskText(task)}
                 </span>
               </div>
             `;
