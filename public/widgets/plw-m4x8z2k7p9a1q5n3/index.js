@@ -1173,8 +1173,12 @@ function renderTasks() {
   document.getElementById("focusLabel").textContent =
     texts.focusLabel || "o que poulie está fazendo agora";
 
-  document.getElementById("focusTask").textContent =
-    state.focusedTask?.text || texts.emptyFocus || "não ta fazendo nada";
+  const focusTask = document.getElementById("focusTask");
+  if (state.focusedTask) {
+    focusTask.innerHTML = renderTaskText(state.focusedTask);
+  } else {
+    focusTask.textContent = texts.emptyFocus || "não ta fazendo nada";
+  }
 
   const progressText = document.getElementById("progressText");
 
