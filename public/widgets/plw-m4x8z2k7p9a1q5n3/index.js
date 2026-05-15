@@ -281,12 +281,12 @@ function applyFieldData(fieldData) {
     focusLabel: getFieldValue(
       fieldData,
       "focusLabelText",
-      "o que poulie está fazendo agora"
+      "what is the streamer doing now?"
     ),
     emptyFocus: getFieldValue(
       fieldData,
       "emptyFocusText",
-      "não ta fazendo nada"
+      "nothing"
     ),
     completedLabel: getFieldValue(
       fieldData,
@@ -1221,7 +1221,7 @@ function renderTasks() {
         </div>
 
         <div class="chatTodo__userProgress">
-          ${userCompletedTasks}/${userTotalTasks} completed
+          ${userCompletedTasks}/${userTotalTasks} ${texts.completedLabel || "completed"}
         </div>
       </div>
 
