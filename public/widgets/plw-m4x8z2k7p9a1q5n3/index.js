@@ -26,6 +26,11 @@ const config = {
   chatMessages: {
     noPendingTasks: "you currently have no pending tasks",
     pendingTasks: "here are your pending tasks:",
+    taskAdded: "task added:",
+    tasksAdded: "tasks added:",
+    taskDone: "task completed:",
+    taskDeleted: "task deleted:",
+    taskNotFound: "task not found",
   },
   permissions: {
     allowEveryoneToAddTasks: true,
@@ -194,6 +199,31 @@ function applyFieldData(fieldData) {
       fieldData,
       "pendingTasksMessage",
       widgetConfig.chatMessages.pendingTasks
+    ),
+    taskAdded: getFieldValue(
+      fieldData,
+      "taskAddedMessage",
+      widgetConfig.chatMessages.taskAdded
+    ),
+    tasksAdded: getFieldValue(
+      fieldData,
+      "tasksAddedMessage",
+      widgetConfig.chatMessages.tasksAdded
+    ),
+    taskDone: getFieldValue(
+      fieldData,
+      "taskDoneMessage",
+      widgetConfig.chatMessages.taskDone
+    ),
+    taskDeleted: getFieldValue(
+      fieldData,
+      "taskDeletedMessage",
+      widgetConfig.chatMessages.taskDeleted
+    ),
+    taskNotFound: getFieldValue(
+      fieldData,
+      "taskNotFoundMessage",
+      widgetConfig.chatMessages.taskNotFound
     ),
   };
 
@@ -786,10 +816,12 @@ function handleAdd(username, content, isBroadcaster = false) {
 
   if (!splitTasks.length) return;
 
+  const addedTasks = [];
+
   splitTasks.forEach((taskText, index) => {
     const nextId = getNextTaskId(username);
 
-    state.tasks.push({
+    const newTask = {
       id: nextId,
       username,
       text: taskText,
@@ -797,11 +829,25 @@ function handleAdd(username, content, isBroadcaster = false) {
       focused: false,
       isStreamer: isBroadcaster || isStreamer(username),
       createdAt: Date.now() + index,
-    });
+    };
+
+    state.tasks.push(newTask);
+    addedTasks.push(newTask);
   });
 
   renderTasks();
   showAddedTasksBurst(splitTasks.length);
+
+  const taskList = addedTasks
+    .map((task) => `${task.id}. ${task.text}`)
+    .join(" | ");
+
+  const message =
+    addedTasks.length > 1
+      ? widgetConfig.chatMessages.tasksAdded
+      : widgetConfig.chatMessages.taskAdded;
+
+  sendChatMessage(`@${username}, ${message} ${taskList}`);
 }
 
 function showAddedTasksBurst(amount) {
@@ -820,27 +866,49 @@ function showAddedTasksBurst(amount) {
 function handleDone(username, taskId) {
   const task = state.tasks.find(
     (task) =>
-      task.username === username &&
+      normalizeUsername(task.username) === normalizeUsername(username) &&
       task.id === Number(taskId)
   );
 
-  if (!task) return;
+  if (!task) {
+    sendChatMessage(`@${username}, ${widgetConfig.chatMessages.taskNotFound}`);
+    return;
+  }
 
   task.completed = true;
 
   renderTasks();
+
+  sendChatMessage(
+    `@${username}, ${widgetConfig.chatMessages.taskDone} ${task.id}. ${task.text}`
+  );
 }
 
 function handleDelete(username, taskId) {
-  state.tasks = state.tasks.filter(
+  const task = state.tasks.find(
     (task) =>
+      normalizeUsername(task.username) === normalizeUsername(username) &&
+      task.id === Number(taskId)
+  );
+
+  if (!task) {
+    sendChatMessage(`@${username}, ${widgetConfig.chatMessages.taskNotFound}`);
+    return;
+  }
+
+  state.tasks = state.tasks.filter(
+    (item) =>
       !(
-        task.username === username &&
-        task.id === Number(taskId)
+        normalizeUsername(item.username) === normalizeUsername(username) &&
+        item.id === Number(taskId)
       )
   );
 
   renderTasks();
+
+  sendChatMessage(
+    `@${username}, ${widgetConfig.chatMessages.taskDeleted} ${task.id}. ${task.text}`
+  );
 }
 
 function isStreamer(username) {
