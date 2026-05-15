@@ -816,7 +816,18 @@ function getTwitchEmoteUrl(id) {
   return `https://static-cdn.jtvnw.net/emoticons/v2/${id}/default/dark/1.0`;
 }
 
-function getTaskEmotesFromEvent(event = {}, fullMessage = "", command = "") {
+function getCommandContentInfo(fullMessage = "", command = "") {
+  const rawContent = fullMessage.slice(command.length);
+  const trimmedContent = rawContent.trimStart();
+  const leadingSpacesRemoved = rawContent.length - trimmedContent.length;
+
+  return {
+    content: trimmedContent.trimEnd(),
+    contentStartIndex: command.length + leadingSpacesRemoved,
+  };
+}
+
+function getTaskEmotesFromEvent(event = {}, fullMessage = "", contentStartIndex = 0) {
   const emotesTag =
     event.tags?.emotes ||
     event.emotes ||
@@ -824,7 +835,6 @@ function getTaskEmotesFromEvent(event = {}, fullMessage = "", command = "") {
 
   if (!emotesTag || typeof emotesTag !== "string") return [];
 
-  const commandOffset = command.length;
   const emotes = [];
 
   emotesTag.split("/").forEach((emoteData) => {
@@ -836,19 +846,15 @@ function getTaskEmotesFromEvent(event = {}, fullMessage = "", command = "") {
       const [start, end] = position.split("-").map(Number);
 
       if (!Number.isFinite(start) || !Number.isFinite(end)) return;
-
-      const adjustedStart = start - commandOffset;
-      const adjustedEnd = end - commandOffset;
-
-      if (adjustedStart < 0) return;
+      if (end < contentStartIndex) return;
 
       const name = fullMessage.slice(start, end + 1);
 
       emotes.push({
         id,
         name,
-        start: adjustedStart,
-        end: adjustedEnd,
+        start: start - contentStartIndex,
+        end: end - contentStartIndex,
         url: getTwitchEmoteUrl(id),
       });
     });
@@ -890,16 +896,13 @@ function renderTaskText(task) {
 }
 
 function handleAdd(username, fullMessage, command, isBroadcaster = false, event = {}) {
-  const content = removeCommandFromMessage(fullMessage, command);
+  const { content, contentStartIndex } = getCommandContentInfo(fullMessage, command);
 
   if (!content) return;
 
-  const allEmotes = getTaskEmotesFromEvent(event, fullMessage, command);
+  const allEmotes = getTaskEmotesFromEvent(event, fullMessage, contentStartIndex);
 
-  const splitTasks = content
-    .split(/[,;]/)
-    .map((task) => task.trim())
-    .filter(Boolean);
+  const splitTasks = content.split(/[,;]/).map((task) => task.trim()).filter(Boolean);
 
   if (!splitTasks.length) return;
 
